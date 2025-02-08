@@ -1,6 +1,6 @@
 @Rosetta_HostAddress = http://localhost:5005
 
-GET {{Rosetta_HostAddress}}/weatherforecast/
+GET {{Rosetta_HostAddress}}/api/v1/healthcheck
 Accept: application/json
 
 ###
