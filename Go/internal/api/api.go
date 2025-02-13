@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/justinas/alice"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type API struct {
@@ -69,6 +70,7 @@ func (api *API) Serve() error {
 func (api *API) routes() http.Handler {
 	api.logger.Info("creating standard middleware chain")
 	standard := alice.New(
+		otelhttp.NewMiddleware("rosetta"),
 		api.recoverPanic,
 		api.enableCORS,
 		api.logRequest,
