@@ -18,15 +18,10 @@ var serviceName = builder.Configuration["ServiceName"] ?? "Rosetta";
 var version = builder.Configuration["Version"] ?? "0.0.0";
 
 logger.ForContext("Version", version).Information("Starting up");
-builder.Logging.ClearProviders();
-builder.Logging.AddSerilog(logger);
-builder.Services.AddOpenApi();
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSingleton(new Version(version));
 builder.Logging.AddOpenTelemetry(options =>
 {
-    options .SetResourceBuilder( ResourceBuilder .CreateDefault() .AddService(serviceName)).AddConsoleExporter();
+    options .SetResourceBuilder(
+        ResourceBuilder.CreateDefault().AddService(serviceName)).AddConsoleExporter();
 });
 builder.Services.AddOpenTelemetry()
       .ConfigureResource(resource => resource.AddService(serviceName))
@@ -35,8 +30,18 @@ builder.Services.AddOpenTelemetry()
           .AddConsoleExporter())
       .WithMetrics(metrics => metrics
           .AddAspNetCoreInstrumentation()
-          .AddConsoleExporter())
-      .WithLogging(logging => logging.AddConsoleExporter());
+          .AddConsoleExporter());
+builder.Logging.AddOpenTelemetry(options => options
+    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+        serviceName: serviceName,
+        serviceVersion: version))
+    .AddConsoleExporter());
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
+builder.Services.AddOpenApi();
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSingleton(new Version(version));
 
 var app = builder.Build();
 
