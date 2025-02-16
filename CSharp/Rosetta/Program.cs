@@ -1,3 +1,8 @@
+using System.Globalization;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 
 
@@ -8,14 +13,30 @@ var logger = new LoggerConfiguration()
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+var serviceName = builder.Configuration["ServiceName"] ?? "Rosetta";
+var version = builder.Configuration["Version"] ?? "0.0.0";
+
+logger.ForContext("Version", version).Information("Starting up");
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(logger);
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-var version = builder.Configuration["Version"] ?? "0.0.0";
 builder.Services.AddSingleton(new Version(version));
-logger.ForContext("Version", version).Information("Starting up");
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options .SetResourceBuilder( ResourceBuilder .CreateDefault() .AddService(serviceName)).AddConsoleExporter();
+});
+builder.Services.AddOpenTelemetry()
+      .ConfigureResource(resource => resource.AddService(serviceName))
+      .WithTracing(tracing => tracing
+          .AddAspNetCoreInstrumentation()
+          .AddConsoleExporter())
+      .WithMetrics(metrics => metrics
+          .AddAspNetCoreInstrumentation()
+          .AddConsoleExporter())
+      .WithLogging(logging => logging.AddConsoleExporter());
 
 var app = builder.Build();
 
