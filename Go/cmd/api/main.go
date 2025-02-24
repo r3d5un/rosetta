@@ -14,11 +14,6 @@ import (
 	"github.com/r3d5un/rosetta/Go/internal/telemetry"
 )
 
-const (
-	appName    = "rosetta"
-	appVersion = "0.0.1"
-)
-
 func main() {
 	if err := run(); err != nil {
 		slog.Error("an error occurred", "error", err)
@@ -32,25 +27,30 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
+	config, err := cfg.New(ctx)
+	if err != nil {
+		return err
+	}
+
 	handler := slog.NewJSONHandler(os.Stdout, nil)
 	logger := slog.New(handler).With(
 		slog.Group(
 			"applicationInstance",
-			slog.String("name", appName),
-			slog.String("version", appVersion),
+			slog.String("name", config.Name),
+			slog.String("version", config.Version),
 			slog.String("instanceId", uuid.New().String()),
 		),
 	)
 	slog.SetDefault(logger)
+	logger.Info("starting application", slog.Any("config", config))
 
-	cfg, err := cfg.New(ctx)
-	if err != nil {
-		logger.Error("unable to load configuration", slog.String("error", err.Error()))
-		return err
-	}
-	logger.Info("configuration loaded", slog.Any("cfg", cfg))
-
-	shutdownTelemetry, err := telemetry.SetupTelemetry(ctx, appName, appVersion)
+	logger.Info("setting up telemetry", slog.Any("telemeteryConfig", config.Telemetry))
+	shutdownTelemetry, err := telemetry.SetupTelemetry(
+		ctx,
+		config.Name,
+		config.Version,
+		config.Telemetry,
+	)
 	if err != nil {
 		return err
 	}
@@ -58,6 +58,7 @@ func run() error {
 		err = errors.Join(err, shutdownTelemetry(context.Background()))
 	}()
 
+	logger.Info("instantiating API")
 	app := api.NewAPI(*logger)
 	if err := app.Serve(); err != nil {
 		logger.Error("unable to start server", slog.String("error", err.Error()))

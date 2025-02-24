@@ -8,6 +8,8 @@ import (
 )
 
 type AppCfg struct {
+	Name        string       `json:"name"`
+	Version     string       `json:"version"`
 	Environemnt string       `json:"environment"`
 	Server      ServerCfg    `json:"server"`
 	Telemetry   TelemetryCfg `json:"telemetry"`

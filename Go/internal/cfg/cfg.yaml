@@ -1,3 +1,5 @@
+name: "rosetta"
+version: "0.0.1"
 environment: "development"
 server:
   port: 4000
