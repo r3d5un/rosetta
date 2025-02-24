@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/r3d5un/rosetta/Go/internal/api"
+	"github.com/r3d5un/rosetta/Go/internal/cfg"
 	"github.com/r3d5un/rosetta/Go/internal/telemetry"
 )
 
@@ -41,6 +42,13 @@ func run() error {
 		),
 	)
 	slog.SetDefault(logger)
+
+	cfg, err := cfg.New(ctx)
+	if err != nil {
+		logger.Error("unable to load configuration", slog.String("error", err.Error()))
+		return err
+	}
+	logger.Info("configuration loaded", slog.Any("cfg", cfg))
 
 	shutdownTelemetry, err := telemetry.SetupTelemetry(ctx, appName, appVersion)
 	if err != nil {
