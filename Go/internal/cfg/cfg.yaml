@@ -4,6 +4,6 @@ environment: "development"
 server:
   port: 4000
 telemetry:
-  type: "stdout"
+  output: "stdout"
   url: "www.test.com"
   port: "42069"
