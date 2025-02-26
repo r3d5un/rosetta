@@ -67,7 +67,3 @@ func run() error {
 
 	return nil
 }
-
-func otelShutdown(context context.Context) {
-	panic("unimplemented")
-}
