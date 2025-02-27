@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/google/uuid"
-	"github.com/r3d5un/rosetta/Go/internal/cfg"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
@@ -33,9 +32,7 @@ import (
 // each as globally available to the application.
 func SetupTelemetry(
 	ctx context.Context,
-	serviceName string,
-	serviceVersion string,
-	config cfg.TelemetryCfg,
+	config TelemetryConfig,
 ) (shutdown func(context.Context) error, err error) {
 	var shutdownFuncs []func(context.Context) error
 	shutdown = func(ctx context.Context) error {
@@ -51,7 +48,7 @@ func SetupTelemetry(
 		err = errors.Join(inErr, shutdown(ctx))
 	}
 
-	resource := newResource(serviceName, serviceVersion)
+	resource := newResource(config.ServiceName, config.ServiceVersion)
 
 	propagator := newPropagator()
 	otel.SetTextMapPropagator(propagator)
@@ -79,11 +76,11 @@ func SetupTelemetry(
 	}
 	shutdownFuncs = append(shutdownFuncs, loggerProvider.Shutdown)
 	global.SetLoggerProvider(loggerProvider)
-	logger := otelslog.NewLogger(serviceName).With(
+	logger := otelslog.NewLogger(config.ServiceName).With(
 		slog.Group(
 			"applicationInstance",
-			slog.String("name", serviceName),
-			slog.String("version", serviceVersion),
+			slog.String("name", config.ServiceName),
+			slog.String("version", config.ServiceVersion),
 			slog.String("instanceId", uuid.New().String()),
 		),
 	)
@@ -102,19 +99,19 @@ func newPropagator() propagation.TextMapPropagator {
 func newLoggerProvider(
 	ctx context.Context,
 	res *resource.Resource,
-	config cfg.TelemetryCfg,
+	config TelemetryConfig,
 ) (*log.LoggerProvider, error) {
 	var processor *log.BatchProcessor
 	var exporter log.Exporter
 	var err error
 
 	switch config.Output {
-	case cfg.HTTP:
+	case OutputHTTP:
 		exporter, err = otlploghttp.New(
 			ctx,
 			otlploghttp.WithEndpoint(fmt.Sprintf("%s:%d", config.URL, config.Port)),
 		)
-	case cfg.GRPC:
+	case OutputGRPC:
 		exporter, err = otlploggrpc.New(
 			ctx,
 			otlploggrpc.WithEndpoint(fmt.Sprintf("%s:%d", config.URL, config.Port)),
@@ -133,19 +130,19 @@ func newLoggerProvider(
 func newMeterProvider(
 	ctx context.Context,
 	res *resource.Resource,
-	config cfg.TelemetryCfg,
+	config TelemetryConfig,
 ) (*metric.MeterProvider, error) {
 	var mp *metric.MeterProvider
 	var exporter metric.Exporter
 	var err error
 
 	switch config.Output {
-	case cfg.HTTP:
+	case OutputHTTP:
 		exporter, err = otlpmetrichttp.New(
 			ctx,
 			otlpmetrichttp.WithEndpoint(fmt.Sprintf("%s:%d", config.URL, config.Port)),
 		)
-	case cfg.GRPC:
+	case OutputGRPC:
 		exporter, err = otlpmetricgrpc.New(
 			ctx,
 			otlpmetricgrpc.WithEndpoint(fmt.Sprintf("%s:%d", config.URL, config.Port)),
@@ -169,19 +166,19 @@ func newMeterProvider(
 func newTracerProvider(
 	ctx context.Context,
 	res *resource.Resource,
-	config cfg.TelemetryCfg,
+	config TelemetryConfig,
 ) (*trace.TracerProvider, error) {
 	var tp *trace.TracerProvider
 	var exporter trace.SpanExporter
 	var err error
 
 	switch config.Output {
-	case cfg.HTTP:
+	case OutputHTTP:
 		exporter, err = otlptracehttp.New(
 			ctx,
 			otlptracehttp.WithEndpoint(fmt.Sprintf("%s:%d", config.URL, config.Port)),
 		)
-	case cfg.GRPC:
+	case OutputGRPC:
 		exporter, err = otlptracegrpc.New(
 			ctx,
 			otlptracegrpc.WithEndpoint(fmt.Sprintf("%s:%d", config.URL, config.Port)),

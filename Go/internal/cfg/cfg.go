@@ -4,33 +4,20 @@ import (
 	"context"
 	"strings"
 
+	"github.com/r3d5un/rosetta/Go/internal/telemetry"
 	"github.com/spf13/viper"
 )
 
 type AppCfg struct {
-	Name        string       `json:"name"`
-	Version     string       `json:"version"`
-	Environemnt string       `json:"environment"`
-	Server      ServerCfg    `json:"server"`
-	Telemetry   TelemetryCfg `json:"telemetry"`
+	Name        string                    `json:"name"`
+	Version     string                    `json:"version"`
+	Environemnt string                    `json:"environment"`
+	Server      ServerCfg                 `json:"server"`
+	Telemetry   telemetry.TelemetryConfig `json:"telemetry"`
 }
 
 type ServerCfg struct {
 	Port int `json:"port"`
-}
-
-type TelemetryOutput string
-
-const (
-	StdOut TelemetryOutput = "stdout"
-	GRPC   TelemetryOutput = "grpc"
-	HTTP   TelemetryOutput = "http"
-)
-
-type TelemetryCfg struct {
-	Output TelemetryOutput `json:"output"`
-	URL    string          `json:"url"`
-	Port   int             `json:"port"`
 }
 
 func New(ctx context.Context) (*AppCfg, error) {

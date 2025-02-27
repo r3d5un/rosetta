@@ -31,12 +31,7 @@ func run() error {
 		return err
 	}
 
-	shutdownTelemetry, err := telemetry.SetupTelemetry(
-		ctx,
-		config.Name,
-		config.Version,
-		config.Telemetry,
-	)
+	shutdownTelemetry, err := telemetry.SetupTelemetry(ctx, config.Telemetry)
 	if err != nil {
 		return err
 	}
