@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/r3d5un/rosetta/Go/internal/cfg"
+	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
@@ -26,6 +29,8 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
+// SetupTelemetry performs the setup of metrics, tracing and logging, registering
+// each as globally available to the application.
 func SetupTelemetry(
 	ctx context.Context,
 	serviceName string,
@@ -74,6 +79,15 @@ func SetupTelemetry(
 	}
 	shutdownFuncs = append(shutdownFuncs, loggerProvider.Shutdown)
 	global.SetLoggerProvider(loggerProvider)
+	logger := otelslog.NewLogger(serviceName).With(
+		slog.Group(
+			"applicationInstance",
+			slog.String("name", serviceName),
+			slog.String("version", serviceVersion),
+			slog.String("instanceId", uuid.New().String()),
+		),
+	)
+	slog.SetDefault(logger)
 
 	return shutdown, nil
 }
