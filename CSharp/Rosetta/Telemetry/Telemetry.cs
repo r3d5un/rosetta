@@ -18,41 +18,82 @@ public class Telemetry
 
     public WebApplicationBuilder Configure(WebApplicationBuilder builder)
     {
-        if (builder == null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
+        builder = SetupLogger(builder);
+        builder = SetupTracing(builder);
+        builder = SetupMetrics(builder);
         
+        return builder;
+    }
+
+    private WebApplicationBuilder SetupLogger (WebApplicationBuilder builder)
+    {
         var logger = new LoggerConfiguration()
             .WriteTo.Console(new Serilog.Formatting.Json.JsonFormatter())
             .Enrich.FromLogContext()
             .CreateLogger();
-        builder.Logging.AddOpenTelemetry(options =>
+
+        switch (_configuration.TelemetryOutput)
         {
-            options .SetResourceBuilder(
-                ResourceBuilder
-                    .CreateDefault()
-                    .AddService(_configuration.ServiceName))
-                .AddConsoleExporter();
-        });
-        builder.Logging.ClearProviders();
-        builder.Logging.AddSerilog(logger);
+            case TelemetryOutput.Grpc:
+            case TelemetryOutput.Http:
+            case TelemetryOutput.StdOut:
+            default:
+                builder.Logging.AddOpenTelemetry(options =>
+                {
+                    options.SetResourceBuilder(
+                        ResourceBuilder
+                            .CreateDefault()
+                            .AddService(
+                                serviceName: _configuration.ServiceName,
+                                serviceVersion: _configuration.ServiceVersion)
+                    ).AddConsoleExporter();
+                });
+                break;
+        }
+    builder.Logging.ClearProviders();
+    builder.Logging.AddSerilog(logger);
         
-        builder.Services.AddOpenTelemetry()
-              .ConfigureResource(resource => resource.AddService(_configuration.ServiceName))
-              .WithTracing(tracing => tracing
-                  .AddAspNetCoreInstrumentation()
-                  .AddConsoleExporter())
-              .WithMetrics(metrics => metrics
-                  .AddAspNetCoreInstrumentation()
-                  .AddConsoleExporter());
-        
-        builder.Logging.AddOpenTelemetry(options => options
-            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
-                serviceName: _configuration.ServiceName,
-                serviceVersion: _configuration.ServiceVersion))
-            .AddConsoleExporter());
-        
+    return builder;
+    }
+
+    private WebApplicationBuilder SetupTracing(WebApplicationBuilder builder)
+    {
+        switch (_configuration.TelemetryOutput)
+        {
+            case TelemetryOutput.Grpc:
+            case TelemetryOutput.Http:
+            case TelemetryOutput.StdOut:
+            default:
+                builder.Services.AddOpenTelemetry()
+                      .ConfigureResource(resource => resource.AddService(_configuration.ServiceName))
+                      .WithTracing(tracing => tracing
+                          .AddAspNetCoreInstrumentation()
+                          .AddConsoleExporter())
+                      .WithMetrics(metrics => metrics
+                          .AddAspNetCoreInstrumentation()
+                          .AddConsoleExporter());
+                break;
+        }
+
+        return builder;
+    }
+
+    private WebApplicationBuilder SetupMetrics(WebApplicationBuilder builder)
+    {
+        switch (_configuration.TelemetryOutput)
+        {
+            case TelemetryOutput.Grpc:
+            case TelemetryOutput.Http:
+            case TelemetryOutput.StdOut:
+            default:
+                builder.Logging.AddOpenTelemetry(options => options
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+                        serviceName: _configuration.ServiceName,
+                        serviceVersion: _configuration.ServiceVersion))
+                    .AddConsoleExporter());
+                break;
+        }
+
         return builder;
     }
 }
