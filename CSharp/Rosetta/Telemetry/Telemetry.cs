@@ -55,7 +55,6 @@ public class Telemetry(TelemetryOptions configuration)
             }
         });
         builder.Logging.AddSerilog(logger);
-        builder.Logging.AddSerilog(logger);
     }
 
     private void SetupTelemetry(WebApplicationBuilder builder)
