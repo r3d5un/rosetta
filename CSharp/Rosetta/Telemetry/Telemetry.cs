@@ -16,16 +16,14 @@ public class Telemetry
         _configuration = configuration;
     }
 
-    public WebApplicationBuilder Configure(WebApplicationBuilder builder)
+    public void ConfigureBuilder(WebApplicationBuilder builder)
     {
-        builder = SetupLogger(builder);
-        builder = SetupTracing(builder);
-        builder = SetupMetrics(builder);
-        
-        return builder;
+        SetupLogger(builder);
+        SetupTracing(builder);
+        SetupMetrics(builder);
     }
 
-    private WebApplicationBuilder SetupLogger (WebApplicationBuilder builder)
+    private void SetupLogger (WebApplicationBuilder builder)
     {
         var logger = new LoggerConfiguration()
             .WriteTo.Console(new Serilog.Formatting.Json.JsonFormatter())
@@ -52,11 +50,9 @@ public class Telemetry
         }
     builder.Logging.ClearProviders();
     builder.Logging.AddSerilog(logger);
-        
-    return builder;
     }
 
-    private WebApplicationBuilder SetupTracing(WebApplicationBuilder builder)
+    private void SetupTracing(WebApplicationBuilder builder)
     {
         switch (_configuration.TelemetryOutput)
         {
@@ -74,11 +70,9 @@ public class Telemetry
                           .AddConsoleExporter());
                 break;
         }
-
-        return builder;
     }
 
-    private WebApplicationBuilder SetupMetrics(WebApplicationBuilder builder)
+    private void SetupMetrics(WebApplicationBuilder builder)
     {
         switch (_configuration.TelemetryOutput)
         {
@@ -93,7 +87,5 @@ public class Telemetry
                     .AddConsoleExporter());
                 break;
         }
-
-        return builder;
     }
 }

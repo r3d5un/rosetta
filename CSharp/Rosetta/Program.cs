@@ -13,7 +13,7 @@ var telemetry = new Telemetry(
         string.Empty,
         0
     ));
-builder = telemetry.Configure(builder);
+telemetry.ConfigureBuilder(builder);
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
