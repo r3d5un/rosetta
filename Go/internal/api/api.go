@@ -11,20 +11,34 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/justinas/alice"
+	"github.com/r3d5un/rosetta/Go/internal/cfg"
+	"github.com/r3d5un/rosetta/Go/internal/database"
+	"github.com/r3d5un/rosetta/Go/internal/logging"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type API struct {
 	mux    *http.ServeMux
 	logger slog.Logger
+	db     *pgxpool.Pool
 }
 
-func NewAPI(logger slog.Logger) *API {
+func NewAPI(ctx context.Context, config cfg.AppCfg) (*API, error) {
+	logger := logging.LoggerFromContext(ctx)
+
+	logger.Info("opening database connection pool", slog.Any("databaseConfig", config.Database))
+	db, err := database.OpenPool(ctx, config.Database)
+	if err != nil {
+		return nil, err
+	}
+
 	return &API{
 		mux:    http.NewServeMux(),
-		logger: logger,
-	}
+		logger: *slog.Default(),
+		db:     db,
+	}, nil
 }
 
 func (api *API) Serve() error {

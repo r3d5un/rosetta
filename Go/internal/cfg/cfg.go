@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/r3d5un/rosetta/Go/internal/database"
 	"github.com/r3d5un/rosetta/Go/internal/telemetry"
 	"github.com/spf13/viper"
 )
@@ -14,6 +15,7 @@ type AppCfg struct {
 	Environemnt string                    `json:"environment"`
 	Server      ServerCfg                 `json:"server"`
 	Telemetry   telemetry.TelemetryConfig `json:"telemetry"`
+	Database    database.DatabaseConfig   `json:"database"`
 }
 
 type ServerCfg struct {

@@ -7,3 +7,8 @@ telemetry:
   output: "stdout"
   url: "www.test.com"
   port: "42069"
+database:
+  connstr: ""
+  maxopenconns: 15
+  idletimeminutes: 5
+  TimeoutSeconds: 5
