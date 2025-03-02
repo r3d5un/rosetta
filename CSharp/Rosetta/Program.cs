@@ -2,18 +2,15 @@ using Rosetta.Telemetry;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var serviceName = builder.Configuration["ServiceName"] ?? "Rosetta";
 var version = builder.Configuration["Version"] ?? "0.0.0";
 
-var telemetry = new Telemetry(
-    new Configuration(
-        serviceName,
-        version,
-        TelemetryOutput.StdOut,
-        string.Empty,
-        0
-    ));
-telemetry.ConfigureBuilder(builder);
+var telemetryOptions = builder.Configuration.GetSection("Telemetry").Get<TelemetryOptions>();
+if (telemetryOptions != null)
+{
+    var telemetry = new Telemetry(telemetryOptions);
+    telemetry.ConfigureBuilder(builder);
+}
+
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
