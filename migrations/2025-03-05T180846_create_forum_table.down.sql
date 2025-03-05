@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS forum.forum;
+DROP TABLE IF EXISTS forum.forums;
