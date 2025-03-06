@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS forum.users
     email      VARCHAR(256)            NOT NULL,
     created_at TIMESTAMP DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
-    CONSTRAINT primary_key PRIMARY KEY (id),
+    CONSTRAINT pk_users PRIMARY KEY (id),
     CONSTRAINT email_unique_constraint UNIQUE (email),
     CONSTRAINT username_unique_constraint UNIQUE (username)
 );

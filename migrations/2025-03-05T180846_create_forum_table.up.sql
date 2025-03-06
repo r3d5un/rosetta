@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS forum.forums
     description TEXT                    NULL,
     created_at  TIMESTAMP DEFAULT NOW() NOT NULL,
     updated_at  TIMESTAMP DEFAULT NOW() NOT NULL,
-    CONSTRAINT primary_key PRIMARY KEY (id)
+    CONSTRAINT pk_forums PRIMARY KEY (id)
 );
