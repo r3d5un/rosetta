@@ -15,11 +15,17 @@ var (
 )
 
 type Models struct {
-	// TODO: Add models
+	Forums  ForumModel
+	Users   UserModel
+	Threads ThreadModel
+	Posts   PostModel
 }
 
 func NewModels(pool *pgxpool.Pool, timeout *time.Duration) Models {
 	return Models{
-		// TODO: Instantiate models
+		Forums:  ForumModel{DB: pool, Timeout: timeout},
+		Users:   UserModel{DB: pool, Timeout: timeout},
+		Threads: ThreadModel{DB: pool, Timeout: timeout},
+		Posts:   PostModel{DB: pool, Timeout: timeout},
 	}
 }
