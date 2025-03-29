@@ -181,7 +181,7 @@ RETURNING id, name, username, email, created_at, updated_at;
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("query", query),
+		slog.String("statement", logging.MinifySQL(query)),
 		slog.Any("input", input),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -226,7 +226,7 @@ RETURNING id, name, username, email, created_at, updated_at;
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("query", query),
+		slog.String("statement", logging.MinifySQL(query)),
 		slog.Any("input", input),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -242,6 +242,46 @@ RETURNING id, name, username, email, created_at, updated_at;
 		input.Name,
 		input.Username,
 		input.Email,
+	).Scan(
+		&u.ID,
+		&u.Name,
+		&u.Username,
+		&u.Email,
+		&u.CreatedAt,
+		&u.UpdatedAt,
+	)
+	if err != nil {
+		return nil, handleError(err, logger)
+	}
+	logger.Info("user updated", slog.Any("user", u))
+
+	return &u, nil
+}
+
+func (m *UserModel) Delete(ctx context.Context, id uuid.UUID) (*User, error) {
+	const query string = `
+DELETE
+FROM forum.users
+WHERE id = $1
+RETURNING id, name, username, email, created_at, updated_at;
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("statement", logging.MinifySQL(query)),
+		slog.String("id", id.String()),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
+	defer cancel()
+
+	logger.Info("performing query")
+	var u User
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		id,
 	).Scan(
 		&u.ID,
 		&u.Name,
