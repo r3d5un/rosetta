@@ -3,6 +3,8 @@ package logging
 import (
 	"context"
 	"log/slog"
+	"regexp"
+	"strings"
 )
 
 type ContextKey string
@@ -23,4 +25,8 @@ func LoggerFromContext(ctx context.Context) *slog.Logger {
 		return slog.Default()
 	}
 	return logger
+}
+
+func MinifySQL(query string) string {
+	return strings.TrimSpace(regexp.MustCompile(`\s+`).ReplaceAllString(query, " "))
 }
