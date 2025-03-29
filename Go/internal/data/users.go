@@ -13,11 +13,26 @@ import (
 )
 
 type User struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	Username  string    `json:"username,omitempty"`
-	Email     string    `json:"email,omitempty"`
+	// ID is the unique identifier of a user.
+	//
+	// Upon creating a new user, any existing values in this field is ignored. The database handles
+	// setting the value upon insertion.
+	ID uuid.UUID `json:"id"`
+	// Name is the full name of the user.
+	Name string `json:"name"`
+	// Username is the unique human readable name of the account.
+	Username string `json:"username,omitempty"`
+	// Email is the unique email beloging to a given user account.
+	Email string `json:"email,omitempty"`
+	// CreatedAt denotes when a user was created.
+	//
+	// Upon creating a new user, any existing values in this field is ignored. The database handles
+	// setting the value upon insertion.
 	CreatedAt time.Time `json:"createdAt"`
+	// UpdatedAt denotes when a user was last updated.
+	//
+	// Upon creating a new user, any existing values in this field is ignored. The database handles
+	// setting the value upon insertion.
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
@@ -148,4 +163,51 @@ LIMIT $1
 
 	logger.Info("query returned users", slog.Any("metadata", metadata))
 	return users, &metadata, nil
+}
+
+func (m *UserModel) Insert(ctx context.Context, input User) (*User, error) {
+	const query string = `
+INSERT INTO forum.users(name, username, email)
+VALUES ($1, $2, $3)
+RETURNING id, name, username, email, created_at, updated_at;
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("query", query),
+		slog.Any("input", input),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
+	defer cancel()
+
+	logger.Info("performing query")
+	var u User
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		input.Name,
+		input.Username,
+		input.Email,
+	).Scan(
+		&u.ID,
+		&u.Name,
+		&u.Username,
+		&u.Email,
+		&u.CreatedAt,
+		&u.UpdatedAt,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			logger.Error("unable to perform query", slog.String("error", err.Error()))
+			return nil, err
+		}
+	}
+	logger.Info("query returned user")
+
+	return &u, nil
 }
