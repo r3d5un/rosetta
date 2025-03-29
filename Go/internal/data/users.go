@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 	"time"
 
@@ -19,9 +20,9 @@ type User struct {
 	// Name is the full name of the user.
 	Name string `json:"name"`
 	// Username is the unique human readable name of the account.
-	Username string `json:"username,omitempty"`
+	Username string `json:"username,omitzero"`
 	// Email is the unique email beloging to a given user account.
-	Email string `json:"email,omitempty"`
+	Email string `json:"email,omitzero"`
 	// CreatedAt denotes when a user was created.
 	//
 	// Upon creating a new user, any existing values in this field is ignored. The database handles
@@ -32,6 +33,13 @@ type User struct {
 	// Upon creating a new user, any existing values in this field is ignored. The database handles
 	// setting the value upon insertion.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Deleted is a soft delete flag for a user.
+	Deleted bool `json:"deleted,omitzero"`
+	// DeletedAt denotes when a user was last updated.
+	//
+	// Upon creating a new user, any existing values in this field is ignored. The database handles
+	// setting the value upon insertion.
+	DeletedAt sql.NullTime `json:"deletedAt,omitzero"`
 }
 
 type UserPatch struct {
@@ -49,6 +57,13 @@ type UserPatch struct {
 	//
 	// If populated, will update the username of the user.
 	Email *string `json:"email,omitempty"`
+	// Deleted is a soft delete flag for a user.
+	Deleted *bool `json:"deleted,omitzero"`
+	// DeletedAt denotes when a user was last updated.
+	//
+	// Upon creating a new user, any existing values in this field is ignored. The database handles
+	// setting the value upon insertion.
+	DeletedAt *time.Time `json:"deletedAt,omitzero"`
 }
 
 type UserModel struct {
@@ -58,7 +73,7 @@ type UserModel struct {
 
 func (m *UserModel) Select(ctx context.Context, id uuid.UUID) (*User, error) {
 	const query string = `
-SELECT id, name, username, email, created_at, updated_at
+SELECT id, name, username, email, created_at, updated_at, deleted, deleted_at
 FROM forum.users
 WHERE id = $1;
 `
@@ -86,6 +101,8 @@ WHERE id = $1;
 		&u.Email,
 		&u.CreatedAt,
 		&u.UpdatedAt,
+		&u.Deleted,
+		&u.DeletedAt,
 	)
 	if err != nil {
 		return nil, handleError(err, logger)
@@ -97,7 +114,7 @@ WHERE id = $1;
 
 func (m *UserModel) SelectAll(ctx context.Context, filters Filters) ([]*User, *Metadata, error) {
 	query := `
-SELECT id, name, username, email, created_at, updated_at
+SELECT id, name, username, email, created_at, updated_at, deleted, deleted_at
 FROM forum.users
 WHERE ($2::UUID IS NULL OR id = $2::UUID)
   AND ($3::VARCHAR(256) IS NULL or name = $3::VARCHAR(256))
@@ -142,20 +159,22 @@ LIMIT $1::INTEGER
 	users := []*User{}
 
 	for rows.Next() {
-		var user User
+		var u User
 
 		err := rows.Scan(
-			&user.ID,
-			&user.Name,
-			&user.Username,
-			&user.Email,
-			&user.CreatedAt,
-			&user.UpdatedAt,
+			&u.ID,
+			&u.Name,
+			&u.Username,
+			&u.Email,
+			&u.CreatedAt,
+			&u.UpdatedAt,
+			&u.Deleted,
+			&u.DeletedAt,
 		)
 		if err != nil {
 			return nil, nil, handleError(err, logger)
 		}
-		users = append(users, &user)
+		users = append(users, &u)
 	}
 	if err = rows.Err(); err != nil {
 		return nil, nil, handleError(err, logger)
@@ -176,7 +195,7 @@ func (m *UserModel) Insert(ctx context.Context, input User) (*User, error) {
 	const query string = `
 INSERT INTO forum.users(name, username, email)
 VALUES ($1, $2, $3)
-RETURNING id, name, username, email, created_at, updated_at;
+RETURNING id, name, username, email, created_at, updated_at, deleted, deleted_at;
 `
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
@@ -204,6 +223,8 @@ RETURNING id, name, username, email, created_at, updated_at;
 		&u.Email,
 		&u.CreatedAt,
 		&u.UpdatedAt,
+		&u.Deleted,
+		&u.DeletedAt,
 	)
 	if err != nil {
 		return nil, handleError(err, logger)
@@ -219,9 +240,11 @@ UPDATE forum.users
 SET name       = COALESCE($2, name),
     username   = COALESCE($3, username),
     email      = COALESCE($4, email),
+    deleted    = COALESCE($5, deleted),
+    deleted_at = COALESCE($6, deleted_at),
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, name, username, email, created_at, updated_at;
+RETURNING id, name, username, email, created_at, updated_at, deleted, deleted_at;
 `
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
@@ -243,6 +266,8 @@ RETURNING id, name, username, email, created_at, updated_at;
 		input.Name,
 		input.Username,
 		input.Email,
+		input.Deleted,
+		input.DeletedAt,
 	).Scan(
 		&u.ID,
 		&u.Name,
@@ -250,6 +275,8 @@ RETURNING id, name, username, email, created_at, updated_at;
 		&u.Email,
 		&u.CreatedAt,
 		&u.UpdatedAt,
+		&u.Deleted,
+		&u.DeletedAt,
 	)
 	if err != nil {
 		return nil, handleError(err, logger)
@@ -264,7 +291,7 @@ func (m *UserModel) Delete(ctx context.Context, id uuid.UUID) (*User, error) {
 DELETE
 FROM forum.users
 WHERE id = $1
-RETURNING id, name, username, email, created_at, updated_at;
+RETURNING id, name, username, email, created_at, updated_at, deleted, deleted_at;
 `
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
@@ -290,6 +317,8 @@ RETURNING id, name, username, email, created_at, updated_at;
 		&u.Email,
 		&u.CreatedAt,
 		&u.UpdatedAt,
+		&u.Deleted,
+		&u.DeletedAt,
 	)
 	if err != nil {
 		return nil, handleError(err, logger)
