@@ -286,6 +286,94 @@ RETURNING id, name, username, email, created_at, updated_at, deleted, deleted_at
 	return &u, nil
 }
 
+func (m *UserModel) SoftDelete(ctx context.Context, id uuid.UUID) (*User, error) {
+	const query string = `
+UPDATE forum.users
+SET deleted    = TRUE,
+    deleted_at = NOW(),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, name, username, email, created_at, updated_at, deleted, deleted_at;
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("statement", logging.MinifySQL(query)),
+		slog.String("id", id.String()),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
+	defer cancel()
+
+	logger.Info("performing query")
+	var u User
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		id,
+	).Scan(
+		&u.ID,
+		&u.Name,
+		&u.Username,
+		&u.Email,
+		&u.CreatedAt,
+		&u.UpdatedAt,
+		&u.Deleted,
+		&u.DeletedAt,
+	)
+	if err != nil {
+		return nil, handleError(err, logger)
+	}
+	logger.Info("user soft deleted", slog.Any("user", u))
+
+	return &u, nil
+}
+
+func (m *UserModel) Restore(ctx context.Context, id uuid.UUID) (*User, error) {
+	const query string = `
+UPDATE forum.users
+SET deleted    = FALSE,
+    deleted_at = NULL,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, name, username, email, created_at, updated_at, deleted, deleted_at;
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("statement", logging.MinifySQL(query)),
+		slog.String("id", id.String()),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
+	defer cancel()
+
+	logger.Info("performing query")
+	var u User
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		id,
+	).Scan(
+		&u.ID,
+		&u.Name,
+		&u.Username,
+		&u.Email,
+		&u.CreatedAt,
+		&u.UpdatedAt,
+		&u.Deleted,
+		&u.DeletedAt,
+	)
+	if err != nil {
+		return nil, handleError(err, logger)
+	}
+	logger.Info("user restored", slog.Any("user", u))
+
+	return &u, nil
+}
+
 func (m *UserModel) Delete(ctx context.Context, id uuid.UUID) (*User, error) {
 	const query string = `
 DELETE

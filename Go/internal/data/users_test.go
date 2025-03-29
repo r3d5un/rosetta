@@ -68,6 +68,18 @@ func TestUserModel(t *testing.T) {
 		assert.Equal(t, newName, updatedUser.Name)
 	})
 
+	t.Run("SoftDelete", func(t *testing.T) {
+		deletedUser, err := models.Users.SoftDelete(ctx, insertedUser.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, deletedUser.Deleted, true)
+	})
+
+	t.Run("Restore", func(t *testing.T) {
+		restoredUser, err := models.Users.Restore(ctx, insertedUser.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, restoredUser.Deleted, false)
+	})
+
 	t.Run("Delete", func(t *testing.T) {
 		deletedUser, err := models.Users.Delete(ctx, insertedUser.ID)
 		assert.NoError(t, err)
