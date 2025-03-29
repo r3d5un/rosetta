@@ -239,6 +239,7 @@ RETURNING id, name, username, email, created_at, updated_at;
 	err := m.DB.QueryRow(
 		ctx,
 		query,
+		input.ID,
 		input.Name,
 		input.Username,
 		input.Email,
