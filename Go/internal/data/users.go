@@ -99,16 +99,16 @@ func (m *UserModel) SelectAll(ctx context.Context, filters Filters) ([]*User, *M
 	query := `
 SELECT id, name, username, email, created_at, updated_at
 FROM forum.users
-WHERE ($2 IS NULL OR id = $2)
-  AND ($3 IS NULL or name = $3)
-  AND ($4 IS NULL or username = $4)
-  AND ($5 IS NULL or email = $5)
-  AND ($6 IS NULL or created_at >= $6)
-  AND ($7 IS NULL or created_at <= $7)
-  AND ($8 IS NULL or updated_at >= $8)
-  AND ($9 IS NULL or updated_at <= $9)
+WHERE ($2::UUID IS NULL OR id = $2::UUID)
+  AND ($3::VARCHAR(256) IS NULL or name = $3::VARCHAR(256))
+  AND ($4::VARCHAR(256) IS NULL or username = $4::VARCHAR(256))
+  AND ($5::VARCHAR(256) IS NULL or email = $5::VARCHAR(256))
+  AND ($6::TIMESTAMP IS NULL or created_at >= $6::TIMESTAMP)
+  AND ($7::TIMESTAMP IS NULL or created_at <= $7::TIMESTAMP)
+  AND ($8::TIMESTAMP IS NULL or updated_at >= $8::TIMESTAMP)
+  AND ($9::TIMESTAMP IS NULL or updated_at <= $9::TIMESTAMP)
 ` + CreateOrderByClause(filters.OrderBy) + `
-LIMIT $1
+LIMIT $1::INTEGER
 `
 
 	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
