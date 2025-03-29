@@ -1,7 +1,23 @@
 package data
 
 import (
+	"errors"
+	"fmt"
+	"log/slog"
 	"strings"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+)
+
+var (
+	ErrRecordNotFound                = errors.New("record not found")
+	ErrForeignKeyConstraintViolation = errors.New("foreign key constraint violation")
+	ErrUniqueConstraintViolation     = errors.New("unique constraint violation")
+	ErrNotNullConstraintViolation    = errors.New("not null constraint violation")
+	ErrCheckConstraintViolation      = errors.New("check constraint violation")
+	ErrSynatxErrorViolation          = errors.New("SQL syntax errors")
+	ErrUndefinedResource             = errors.New("undefined resource")
 )
 
 const (
@@ -48,4 +64,29 @@ func CreateOrderByClause(orderBy []string) string {
 	orderClauses[len(orderClauses)-1] = "id ASC"
 
 	return "ORDER BY " + strings.Join(orderClauses, ", ")
+}
+
+func handleError(err error, logger *slog.Logger) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		switch pgErr.Code {
+		case "23505": // unique_violation
+			logger.Error("unique constraint violation", slog.String("error", pgErr.Message))
+			return ErrUniqueConstraintViolation
+		case "23503": // foreign_key_violation
+			logger.Error("foreign key constraint violation", slog.String("error", pgErr.Message))
+			return ErrForeignKeyConstraintViolation
+		case "23514": // check_violation
+			logger.Error("check constraint violation", slog.String("error", pgErr.Message))
+			return ErrCheckConstraintViolation
+		default:
+			logger.Error("unhandled constraint violation", slog.String("error", pgErr.Message))
+			return fmt.Errorf("Unhandled constraint violation: %s", pgErr.Message)
+		}
+	} else if errors.Is(err, pgx.ErrNoRows) {
+		return ErrRecordNotFound
+	} else {
+		logger.Error("unable to perform query", slog.String("error", err.Error()))
+		return err
+	}
 }

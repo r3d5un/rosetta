@@ -2,12 +2,10 @@ package data
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/r3d5un/rosetta/Go/internal/logging"
 )
@@ -34,6 +32,23 @@ type User struct {
 	// Upon creating a new user, any existing values in this field is ignored. The database handles
 	// setting the value upon insertion.
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type UserPatch struct {
+	// ID is the unique identifier of a user.
+	ID uuid.UUID `json:"id"`
+	// Name is the full name of the user.
+	//
+	// If populated, will update the name of the user.
+	Name *string `json:"name"`
+	// Username is the unique human readable name of the account.
+	//
+	// If populated, will update the username of the user.
+	Username *string `json:"username,omitempty"`
+	// Email is the unique email beloging to a given user account.
+	//
+	// If populated, will update the username of the user.
+	Email *string `json:"email,omitempty"`
 }
 
 type UserModel struct {
@@ -73,15 +88,9 @@ WHERE id = $1;
 		&u.UpdatedAt,
 	)
 	if err != nil {
-		switch {
-		case errors.Is(err, pgx.ErrNoRows):
-			return nil, ErrRecordNotFound
-		default:
-			logger.Error("unable to perform query", slog.String("error", err.Error()))
-			return nil, err
-		}
+		return nil, handleError(err, logger)
 	}
-	logger.Info("query returned user")
+	logger.Info("user selected", slog.Any("user", u))
 
 	return &u, nil
 }
@@ -144,14 +153,12 @@ LIMIT $1
 			&user.UpdatedAt,
 		)
 		if err != nil {
-			logger.Error("unable to scan query result", slog.String("error", err.Error()))
-			return nil, nil, err
+			return nil, nil, handleError(err, logger)
 		}
 		users = append(users, &user)
 	}
 	if err = rows.Err(); err != nil {
-		logger.Error("unable to scan query result", slog.String("error", err.Error()))
-		return nil, nil, err
+		return nil, nil, handleError(err, logger)
 	}
 	length := len(users)
 	var metadata Metadata
@@ -161,7 +168,7 @@ LIMIT $1
 	}
 	metadata.ResponseLength = length
 
-	logger.Info("query returned users", slog.Any("metadata", metadata))
+	logger.Info("users selected", slog.Any("metadata", metadata))
 	return users, &metadata, nil
 }
 
@@ -199,15 +206,54 @@ RETURNING id, name, username, email, created_at, updated_at;
 		&u.UpdatedAt,
 	)
 	if err != nil {
-		switch {
-		case errors.Is(err, pgx.ErrNoRows):
-			return nil, ErrRecordNotFound
-		default:
-			logger.Error("unable to perform query", slog.String("error", err.Error()))
-			return nil, err
-		}
+		return nil, handleError(err, logger)
 	}
-	logger.Info("query returned user")
+	logger.Info("user created", slog.Any("user", u))
+
+	return &u, nil
+}
+
+func (m *UserModel) Update(ctx context.Context, input UserPatch) (*User, error) {
+	const query string = `
+UPDATE forum.users
+SET name       = COALESCE($2, name),
+    username   = COALESCE($3, username),
+    email      = COALESCE($4, email),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, name, username, email, created_at, updated_at;
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("query", query),
+		slog.Any("input", input),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
+	defer cancel()
+
+	logger.Info("performing query")
+	var u User
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		input.Name,
+		input.Username,
+		input.Email,
+	).Scan(
+		&u.ID,
+		&u.Name,
+		&u.Username,
+		&u.Email,
+		&u.CreatedAt,
+		&u.UpdatedAt,
+	)
+	if err != nil {
+		return nil, handleError(err, logger)
+	}
+	logger.Info("user updated", slog.Any("user", u))
 
 	return &u, nil
 }
