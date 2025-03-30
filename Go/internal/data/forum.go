@@ -169,3 +169,46 @@ LIMIT $1::INTEGER
 	logger.Info("forums selected", slog.Any("metadata", metadata))
 	return forums, &metadata, nil
 }
+
+func (m *ForumModel) Insert(ctx context.Context, input Forum) (*Forum, error) {
+	const query string = `
+INSERT INTO forum.forums(owner_id, name, description)
+VALUES($1, $2, $3)
+RETURNING id, owner_id, name, description, created_at, updated_at, deleted, deleted_at;
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("query", query),
+		slog.Any("input", input),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
+	defer cancel()
+
+	logger.Info("performing query")
+	var f Forum
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		input.OwnerID,
+		input.Name,
+		input.Description,
+	).Scan(
+		&f.ID,
+		&f.OwnerID,
+		&f.Name,
+		&f.Description,
+		&f.CreatedAt,
+		&f.UpdatedAt,
+		&f.Deleted,
+		&f.DeletedAt,
+	)
+	if err != nil {
+		return nil, handleError(err, logger)
+	}
+	logger.Info("forum selected", slog.Any("forum", f))
+
+	return &f, nil
+}
