@@ -41,6 +41,20 @@ type Forum struct {
 	DeletedAt sql.NullTime `json:"deletedAt,omitzero"`
 }
 
+type ForumPatch struct {
+	// ID is the unique identifier of a forum.
+	//
+	// Upon creating a new forum, any existing values in this field is ignored. The database handles
+	// setting the value upon insertion.
+	ID uuid.UUID `json:"id"`
+	// OwnerID is the unique identifier of a forum.
+	OwnerID *uuid.UUID `json:"ownerId"`
+	// Name is the human readable name of the forum
+	Name *string `json:"name"`
+	// Description contains a description about the purposes and topics of a forum.
+	Description *string `json:"description,omitzero"`
+}
+
 type ForumModel struct {
 	DB      *pgxpool.Pool
 	Timeout *time.Duration
@@ -194,6 +208,53 @@ RETURNING id, owner_id, name, description, created_at, updated_at, deleted, dele
 		query,
 		input.OwnerID,
 		input.Name,
+		input.Description,
+	).Scan(
+		&f.ID,
+		&f.OwnerID,
+		&f.Name,
+		&f.Description,
+		&f.CreatedAt,
+		&f.UpdatedAt,
+		&f.Deleted,
+		&f.DeletedAt,
+	)
+	if err != nil {
+		return nil, handleError(err, logger)
+	}
+	logger.Info("forum selected", slog.Any("forum", f))
+
+	return &f, nil
+}
+
+func (m *ForumModel) Update(ctx context.Context, input ForumPatch) (*Forum, error) {
+	const query string = `
+UPDATE forum.forums
+SET name = COALESCE($2::VARCHAR(256), name)
+    owner_id = COALESCE($3::UUID, owner_id)
+    description = COALESCE($4::TEXT, description)
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, owner_id, name, description, created_at, updated_at, deleted, deleted_at;
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("query", query),
+		slog.Any("input", input),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
+	defer cancel()
+
+	logger.Info("performing query")
+	var f Forum
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		input.Name,
+		input.OwnerID,
 		input.Description,
 	).Scan(
 		&f.ID,
