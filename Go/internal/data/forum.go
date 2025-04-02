@@ -269,7 +269,7 @@ RETURNING id, owner_id, name, description, created_at, updated_at, deleted, dele
 	if err != nil {
 		return nil, handleError(err, logger)
 	}
-	logger.Info("forum selected", slog.Any("forum", f))
+	logger.Info("forum updated", slog.Any("forum", f))
 
 	return &f, nil
 }
