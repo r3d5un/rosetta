@@ -230,9 +230,9 @@ RETURNING id, owner_id, name, description, created_at, updated_at, deleted, dele
 func (m *ForumModel) Update(ctx context.Context, input ForumPatch) (*Forum, error) {
 	const query string = `
 UPDATE forum.forums
-SET name = COALESCE($2::VARCHAR(256), name)
-    owner_id = COALESCE($3::UUID, owner_id)
-    description = COALESCE($4::TEXT, description)
+SET name = COALESCE($2::VARCHAR(256), name),
+    owner_id = COALESCE($3::UUID, owner_id),
+    description = COALESCE($4::TEXT, description),
     updated_at = NOW()
 WHERE id = $1
 RETURNING id, owner_id, name, description, created_at, updated_at, deleted, deleted_at;
@@ -253,6 +253,7 @@ RETURNING id, owner_id, name, description, created_at, updated_at, deleted, dele
 	err := m.DB.QueryRow(
 		ctx,
 		query,
+		input.ID,
 		input.Name,
 		input.OwnerID,
 		input.Description,
