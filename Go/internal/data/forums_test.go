@@ -60,4 +60,21 @@ func TestForumModel(t *testing.T) {
 			)
 		}
 	})
+
+	t.Run("Update", func(t *testing.T) {
+		newName := "Surviving Militech"
+		updatedUser, err := models.Forums.Update(ctx, data.ForumPatch{
+			ID:   newForum.ID,
+			Name: &newName,
+		})
+		assert.NoError(t, err)
+		assert.NotEqual(t, newForum, *updatedUser)
+		assert.Equal(t, newName, updatedUser.Name)
+	})
+
+	t.Run("SoftDelete", func(t *testing.T) {})
+
+	t.Run("Restore", func(t *testing.T) {})
+
+	t.Run("Delete", func(t *testing.T) {})
 }
