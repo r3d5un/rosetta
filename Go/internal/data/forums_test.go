@@ -84,5 +84,9 @@ func TestForumModel(t *testing.T) {
 		assert.Equal(t, restoreForum.Deleted, false)
 	})
 
-	t.Run("Delete", func(t *testing.T) {})
+	t.Run("Delete", func(t *testing.T) {
+		deletedForum, err := models.Forums.Delete(ctx, newForum.ID)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, deletedForum)
+	})
 }
