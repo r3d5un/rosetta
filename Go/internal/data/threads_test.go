@@ -69,6 +69,14 @@ func TestThreadModel(t *testing.T) {
 	})
 
 	t.Run("Update", func(t *testing.T) {
+		newTitle := "Neurochipped Johnny Boy"
+		updatedThread, err := models.Threads.Update(ctx, data.ThreadPatch{
+			ID:    newThread.ID,
+			Title: &newTitle,
+		})
+		assert.NoError(t, err)
+		assert.NotEqual(t, newThread, *updatedThread)
+		assert.Equal(t, newTitle, updatedThread.Title)
 	})
 
 	t.Run("SoftDelete", func(t *testing.T) {

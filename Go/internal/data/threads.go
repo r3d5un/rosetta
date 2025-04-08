@@ -45,6 +45,20 @@ type Thread struct {
 	DeletedAt sql.NullTime `json:"deletedAt,omitzero"`
 }
 
+type ThreadPatch struct {
+	// ID is the unique identifier of the thread
+	//
+	// Upon creating a new forum, any existing values in this field is ignored. The database handles
+	// setting the value upon insertion.
+	ID uuid.UUID `json:"id"`
+	// ForumID is the parent forum this thread belongs to.
+	ForumID *uuid.UUID `json:"forumId"`
+	// Title is the subject the thread is about.
+	Title *string `json:"title"`
+	// AuthorID is the unique identifier of the author of the thread.
+	AuthorID *uuid.UUID `json:"authorId"`
+}
+
 type ThreadModel struct {
 	DB      *pgxpool.Pool
 	Timeout *time.Duration
@@ -205,6 +219,54 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 	err := m.DB.QueryRow(
 		ctx,
 		query,
+		input.ForumID,
+		input.Title,
+		input.AuthorID,
+	).Scan(
+		&t.ID,
+		&t.ForumID,
+		&t.Title,
+		&t.AuthorID,
+		&t.CreatedAt,
+		&t.UpdatedAt,
+		&t.IsLocked,
+		&t.Deleted,
+		&t.DeletedAt,
+	)
+	if err != nil {
+		return nil, handleError(err, logger)
+	}
+	logger.Info("forum selected", slog.Any("forum", t))
+
+	return &t, nil
+}
+
+func (m *ThreadModel) Update(ctx context.Context, input ThreadPatch) (*Thread, error) {
+	const query string = `
+UPDATE forum.threads
+SET forum_id = COALESCE($2::UUID, forum_id),
+    title = COALESCE($3::VARCHAR(256), title),
+    author_id = COALESCE($4::UUID, author_id)
+WHERE id = $1::UUID
+RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at;
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("query", logging.MinifySQL(query)),
+		slog.Any("input", input),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
+	defer cancel()
+
+	logger.Info("performing query")
+	var t Thread
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		input.ID,
 		input.ForumID,
 		input.Title,
 		input.AuthorID,
