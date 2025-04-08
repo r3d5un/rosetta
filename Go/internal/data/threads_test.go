@@ -86,6 +86,9 @@ func TestThreadModel(t *testing.T) {
 	})
 
 	t.Run("Restore", func(t *testing.T) {
+		deletedThread, err := models.Threads.Restore(ctx, newThread.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, deletedThread.Deleted, false)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
