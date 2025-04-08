@@ -14,7 +14,7 @@ import (
 type Thread struct {
 	// ID is the unique identifier of the thread
 	//
-	// Upon creating a new forum, any existing values in this field is ignored. The database handles
+	// Upon creating a new thread, any existing values in this field is ignored. The database handles
 	// setting the value upon insertion.
 	ID uuid.UUID `json:"id"`
 	// ForumID is the parent forum this thread belongs to.
@@ -23,32 +23,32 @@ type Thread struct {
 	Title string `json:"title"`
 	// AuthorID is the unique identifier of the author of the thread.
 	AuthorID uuid.UUID `json:"authorId"`
-	// CreatedAt denotes when a forum was created.
+	// CreatedAt denotes when a thread was created.
 	//
-	// Upon creating a new forum, any existing values in this field is ignored. The database handles
+	// Upon creating a new thread, any existing values in this field is ignored. The database handles
 	// setting the value upon insertion.
 	CreatedAt time.Time `json:"createdAt"`
-	// UpdatedAt denotes when a forum was last updated.
+	// UpdatedAt denotes when a thread was last updated.
 	//
-	// Upon creating a new forum, any existing values in this field is ignored. The database handles
+	// Upon creating a new thread, any existing values in this field is ignored. The database handles
 	// setting the value upon insertion.
 	UpdatedAt time.Time `json:"updatedAt"`
 	// IsLocked denotes whether a thread had been locked for changes.
 	//
 	// This field is ignored when updating or creating new threads.
 	IsLocked bool `json:"isLocked"`
-	// Deleted is a soft delete flag for a forum.
+	// Deleted is a soft delete flag for a thread.
 	Deleted bool `json:"deleted,omitzero"`
-	// DeletedAt denotes when a forum was marked as deleted.
+	// DeletedAt denotes when a thread was marked as deleted.
 	//
-	// This field is ignored when updating or creating new forums.
+	// This field is ignored when updating or creating new thread.
 	DeletedAt sql.NullTime `json:"deletedAt,omitzero"`
 }
 
 type ThreadPatch struct {
 	// ID is the unique identifier of the thread
 	//
-	// Upon creating a new forum, any existing values in this field is ignored. The database handles
+	// Upon creating a new thread, any existing values in this field is ignored. The database handles
 	// setting the value upon insertion.
 	ID uuid.UUID `json:"id"`
 	// ForumID is the parent forum this thread belongs to.
@@ -101,7 +101,7 @@ WHERE id = $1::UUID;
 	if err != nil {
 		return nil, handleError(err, logger)
 	}
-	logger.Info("forum selected", slog.Any("forum", t))
+	logger.Info("thread selected", slog.Any("thread", t))
 
 	return &t, nil
 }
@@ -193,7 +193,7 @@ LIMIT $1::INTEGER;
 	}
 	metadata.ResponseLength = length
 
-	logger.Info("forums selected", slog.Any("metadata", metadata))
+	logger.Info("thread selected", slog.Any("metadata", metadata))
 	return threads, &metadata, nil
 }
 
@@ -236,7 +236,7 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 	if err != nil {
 		return nil, handleError(err, logger)
 	}
-	logger.Info("forum selected", slog.Any("forum", t))
+	logger.Info("thread selected", slog.Any("thread", t))
 
 	return &t, nil
 }
@@ -284,7 +284,7 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 	if err != nil {
 		return nil, handleError(err, logger)
 	}
-	logger.Info("forum selected", slog.Any("forum", t))
+	logger.Info("thread selected", slog.Any("forum", t))
 
 	return &t, nil
 }
@@ -329,7 +329,11 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 	if err != nil {
 		return nil, handleError(err, logger)
 	}
-	logger.Info("forum selected", slog.Any("forum", t))
+	logger.Info("thread selected", slog.Any("thread", t))
+
+	return &t, nil
+}
+
 func (m *ThreadModel) Restore(ctx context.Context, id uuid.UUID) (*Thread, error) {
 	const query string = `
 UPDATE forum.threads
