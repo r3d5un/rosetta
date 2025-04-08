@@ -115,6 +115,7 @@ WHERE ($2::UUID IS NULL OR id = $2::UUID)
   AND ($9::BOOLEAN IS NULL or deleted = $9::BOOLEAN)
   AND ($10::TIMESTAMP IS NULL or deleted_at >= $10::TIMESTAMP)
   AND ($11::TIMESTAMP IS NULL or deleted_at <= $11::TIMESTAMP)
+  AND id > $12::UUID
 ` + CreateOrderByClause(filters.OrderBy) + `
 LIMIT $1::INTEGER
 `
@@ -143,6 +144,7 @@ LIMIT $1::INTEGER
 		filters.Deleted,
 		filters.DeletedAtFrom,
 		filters.DeletedAtTo,
+		filters.LastSeen,
 	)
 	if err != nil {
 		logger.Error("unable to perform query", slog.String("error", err.Error()))
