@@ -288,3 +288,48 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 
 	return &t, nil
 }
+
+func (m *ThreadModel) SoftDelete(ctx context.Context, id uuid.UUID) (*Thread, error) {
+	const query string = `
+UPDATE forum.threads
+SET deleted    = TRUE,
+    deleted_at = NOW(),
+    updated_at = NOW()
+WHERE id = $1::UUID
+RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at;
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("query", logging.MinifySQL(query)),
+		slog.String("id", id.String()),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
+	defer cancel()
+
+	logger.Info("performing query")
+	var t Thread
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		id,
+	).Scan(
+		&t.ID,
+		&t.ForumID,
+		&t.Title,
+		&t.AuthorID,
+		&t.CreatedAt,
+		&t.UpdatedAt,
+		&t.IsLocked,
+		&t.Deleted,
+		&t.DeletedAt,
+	)
+	if err != nil {
+		return nil, handleError(err, logger)
+	}
+	logger.Info("forum selected", slog.Any("forum", t))
+
+	return &t, nil
+}
