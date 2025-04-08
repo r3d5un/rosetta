@@ -55,6 +55,17 @@ func TestThreadModel(t *testing.T) {
 	})
 
 	t.Run("SelectAll", func(t *testing.T) {
+		threads, metadata, err := models.Threads.SelectAll(ctx, data.Filters{PageSize: 100})
+		assert.NoError(t, err)
+		assert.NotEmpty(t, threads)
+		assert.NotEmpty(t, metadata)
+		if !assert.Equal(t, threads[len(threads)-1].ID, metadata.LastSeen) {
+			t.Errorf(
+				"last seen ID %s does not match the last selected user ID %s\n",
+				metadata.LastSeen,
+				threads[len(threads)-1].ID,
+			)
+		}
 	})
 
 	t.Run("Update", func(t *testing.T) {

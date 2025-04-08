@@ -92,6 +92,97 @@ WHERE id = $1::UUID;
 	return &t, nil
 }
 
+func (m *ThreadModel) SelectAll(
+	ctx context.Context,
+	filters Filters,
+) ([]*Thread, *Metadata, error) {
+	query := `
+SELECT id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at
+FROM forum.threads
+WHERE ($2::UUID IS NULL OR id = $2::UUID)
+  AND ($3::UUID IS NULL OR forum_id = $3::UUID)
+  AND ($4::VARCHAR(256) IS NULL OR title = $4::VARCHAR(256))
+  AND ($5::UUID IS NULL OR author_id = $5::UUID)
+  AND ($6::TIMESTAMP IS NULL or created_at >= $6::TIMESTAMP)
+  AND ($7::TIMESTAMP IS NULL or created_at <= $7::TIMESTAMP)
+  AND ($8::TIMESTAMP IS NULL or updated_at >= $8::TIMESTAMP)
+  AND ($9::TIMESTAMP IS NULL or updated_at <= $9::TIMESTAMP)
+  AND ($10::BOOLEAN IS NULL or is_locked = $10::BOOLEAN)
+  AND ($11::BOOLEAN IS NULL or deleted = $11::BOOLEAN)
+  AND ($12::TIMESTAMP IS NULL or deleted_at >= $12::TIMESTAMP)
+  AND ($13::TIMESTAMP IS NULL or deleted_at <= $13::TIMESTAMP)
+  AND id > $14::UUID
+` + CreateOrderByClause(filters.OrderBy) + `
+LIMIT $1::INTEGER;
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("query", query),
+		slog.Any("filters", filters),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	logger.Info("performing query")
+	rows, err := m.DB.Query(
+		ctx,
+		query,
+		filters.PageSize,
+		filters.ID,
+		filters.ForumID,
+		filters.Title,
+		filters.AuthorID,
+		filters.CreatedAtFrom,
+		filters.CreatedAtTo,
+		filters.UpdatedAtFrom,
+		filters.UpdatedAtTo,
+		filters.IsLocked,
+		filters.Deleted,
+		filters.DeletedAtFrom,
+		filters.DeletedAtTo,
+		filters.LastSeen,
+	)
+	if err != nil {
+		logger.Error("unable to perform query", slog.String("error", err.Error()))
+		return nil, nil, err
+	}
+
+	threads := []*Thread{}
+
+	for rows.Next() {
+		var t Thread
+
+		err := rows.Scan(
+			&t.ID,
+			&t.ForumID,
+			&t.Title,
+			&t.AuthorID,
+			&t.CreatedAt,
+			&t.UpdatedAt,
+			&t.IsLocked,
+			&t.Deleted,
+			&t.DeletedAt,
+		)
+		if err != nil {
+			return nil, nil, handleError(err, logger)
+		}
+		threads = append(threads, &t)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, nil, handleError(err, logger)
+	}
+	length := len(threads)
+	var metadata Metadata
+	if length > 0 {
+		metadata.LastSeen = threads[length-1].ID
+		metadata.Next = true
+	}
+	metadata.ResponseLength = length
+
+	logger.Info("forums selected", slog.Any("metadata", metadata))
+	return threads, &metadata, nil
+}
+
 func (m *ThreadModel) Insert(ctx context.Context, input Thread) (*Thread, error) {
 	const query string = `
 INSERT INTO forum.threads(forum_id, title, author_id)

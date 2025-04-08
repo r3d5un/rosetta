@@ -15,7 +15,10 @@ type Metadata struct {
 type Filters struct {
 	ID            *uuid.UUID `json:"id"`
 	OwnerID       *uuid.UUID `json:"ownerId"`
+	ForumID       *uuid.UUID `json:"forumId"`
+	AuthorID      *uuid.UUID `json:"authorId"`
 	Name          *string    `json:"name"`
+	Title         *string    `json:"title"`
 	Username      *string    `json:"username,omitempty"`
 	Email         *string    `json:"email,omitempty"`
 	CreatedAtFrom *time.Time `json:"createdAtFrom"`
@@ -25,6 +28,7 @@ type Filters struct {
 	DeletedAtFrom *time.Time `json:"deletedAtFrom"`
 	DeletedAtTo   *time.Time `json:"deletedAtTo"`
 	Deleted       *bool      `json:"deleted"`
+	IsLocked      *bool      `json:"isLocked"`
 
 	OrderBy         []string  `json:"order_by,omitempty"`
 	OrderBySafeList []string  `json:"order_by_safe_list,omitempty"`
