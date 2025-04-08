@@ -193,7 +193,7 @@ LIMIT $1::INTEGER;
 	}
 	metadata.ResponseLength = length
 
-	logger.Info("thread selected", slog.Any("metadata", metadata))
+	logger.Info("threads selected", slog.Any("metadata", metadata))
 	return threads, &metadata, nil
 }
 
@@ -236,7 +236,7 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 	if err != nil {
 		return nil, handleError(err, logger)
 	}
-	logger.Info("thread selected", slog.Any("thread", t))
+	logger.Info("thread inserted", slog.Any("thread", t))
 
 	return &t, nil
 }
@@ -284,7 +284,7 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 	if err != nil {
 		return nil, handleError(err, logger)
 	}
-	logger.Info("thread selected", slog.Any("forum", t))
+	logger.Info("thread updated", slog.Any("forum", t))
 
 	return &t, nil
 }
@@ -329,7 +329,7 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 	if err != nil {
 		return nil, handleError(err, logger)
 	}
-	logger.Info("thread selected", slog.Any("thread", t))
+	logger.Info("thread marked deleted", slog.Any("thread", t))
 
 	return &t, nil
 }
@@ -374,7 +374,50 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 	if err != nil {
 		return nil, handleError(err, logger)
 	}
-	logger.Info("thread selected", slog.Any("thread", t))
+	logger.Info("thread restored", slog.Any("thread", t))
+
+	return &t, nil
+}
+
+func (m *ThreadModel) Delete(ctx context.Context, id uuid.UUID) (*Thread, error) {
+	const query string = `
+DELETE
+FROM forum.threads
+WHERE id = $1
+RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at;
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("query", logging.MinifySQL(query)),
+		slog.String("id", id.String()),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
+	defer cancel()
+
+	logger.Info("performing query")
+	var t Thread
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		id,
+	).Scan(
+		&t.ID,
+		&t.ForumID,
+		&t.Title,
+		&t.AuthorID,
+		&t.CreatedAt,
+		&t.UpdatedAt,
+		&t.IsLocked,
+		&t.Deleted,
+		&t.DeletedAt,
+	)
+	if err != nil {
+		return nil, handleError(err, logger)
+	}
+	logger.Info("thread deleted", slog.Any("thread", t))
 
 	return &t, nil
 }
