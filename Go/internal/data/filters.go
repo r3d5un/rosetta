@@ -26,8 +26,8 @@ type Filters struct {
 	DeletedAtTo   *time.Time `json:"deletedAtTo"`
 	Deleted       *bool      `json:"deleted"`
 
-	OrderBy         []string   `json:"order_by,omitempty"`
-	OrderBySafeList []string   `json:"order_by_safe_list,omitempty"`
-	LastSeen        *uuid.UUID `json:"lastSeen"`
-	PageSize        int        `json:"page_size,omitempty"`
+	OrderBy         []string  `json:"order_by,omitempty"`
+	OrderBySafeList []string  `json:"order_by_safe_list,omitempty"`
+	LastSeen        uuid.UUID `json:"lastSeen"`
+	PageSize        int       `json:"page_size,omitempty"`
 }
