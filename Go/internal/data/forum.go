@@ -69,7 +69,7 @@ WHERE id = $1;
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("query", query),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.String("id", id.String()),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -195,7 +195,7 @@ RETURNING id, owner_id, name, description, created_at, updated_at, deleted, dele
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("query", query),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.Any("input", input),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -242,7 +242,7 @@ RETURNING id, owner_id, name, description, created_at, updated_at, deleted, dele
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("query", query),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.Any("input", input),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -289,7 +289,7 @@ RETURNING id, owner_id, name, description, created_at, updated_at, deleted, dele
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("query", query),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.String("id", id.String()),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -333,7 +333,7 @@ RETURNING id, owner_id, name, description, created_at, updated_at, deleted, dele
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("query", query),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.String("id", id.String()),
 		slog.Duration("timeout", *m.Timeout),
 	))
