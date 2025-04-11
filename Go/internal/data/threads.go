@@ -43,6 +43,8 @@ type Thread struct {
 	//
 	// This field is ignored when updating or creating new thread.
 	DeletedAt sql.NullTime `json:"deletedAt,omitzero"`
+	// Likes is the sum of votes the thread has received.
+	Likes int64 `json:"likes"`
 }
 
 type ThreadPatch struct {
@@ -66,7 +68,7 @@ type ThreadModel struct {
 
 func (m *ThreadModel) Select(ctx context.Context, id uuid.UUID) (*Thread, error) {
 	const query string = `
-SELECT id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at
+SELECT id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at, likes
 FROM forum.threads
 WHERE id = $1::UUID;
 `
@@ -97,6 +99,7 @@ WHERE id = $1::UUID;
 		&t.IsLocked,
 		&t.Deleted,
 		&t.DeletedAt,
+		&t.Likes,
 	)
 	if err != nil {
 		return nil, handleError(err, logger)
@@ -111,7 +114,7 @@ func (m *ThreadModel) SelectAll(
 	filters Filters,
 ) ([]*Thread, *Metadata, error) {
 	query := `
-SELECT id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at
+SELECT id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at, likes
 FROM forum.threads
 WHERE ($2::UUID IS NULL OR id = $2::UUID)
   AND ($3::UUID IS NULL OR forum_id = $3::UUID)
@@ -176,6 +179,7 @@ LIMIT $1::INTEGER;
 			&t.IsLocked,
 			&t.Deleted,
 			&t.DeletedAt,
+			&t.Likes,
 		)
 		if err != nil {
 			return nil, nil, handleError(err, logger)
@@ -201,7 +205,7 @@ func (m *ThreadModel) Insert(ctx context.Context, input Thread) (*Thread, error)
 	const query string = `
 INSERT INTO forum.threads(forum_id, title, author_id)
 VALUES($1::UUID, $2::VARCHAR(256), $3::UUID)
-RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at;
+RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at, likes;
 `
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
@@ -232,6 +236,7 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 		&t.IsLocked,
 		&t.Deleted,
 		&t.DeletedAt,
+		&t.Likes,
 	)
 	if err != nil {
 		return nil, handleError(err, logger)
@@ -248,7 +253,7 @@ SET forum_id = COALESCE($2::UUID, forum_id),
     title = COALESCE($3::VARCHAR(256), title),
     author_id = COALESCE($4::UUID, author_id)
 WHERE id = $1::UUID
-RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at;
+RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at, likes;
 `
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
@@ -280,6 +285,7 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 		&t.IsLocked,
 		&t.Deleted,
 		&t.DeletedAt,
+		&t.Likes,
 	)
 	if err != nil {
 		return nil, handleError(err, logger)
@@ -296,7 +302,7 @@ SET deleted    = TRUE,
     deleted_at = NOW(),
     updated_at = NOW()
 WHERE id = $1::UUID
-RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at;
+RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at, likes;
 `
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
@@ -325,6 +331,7 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 		&t.IsLocked,
 		&t.Deleted,
 		&t.DeletedAt,
+		&t.Likes,
 	)
 	if err != nil {
 		return nil, handleError(err, logger)
@@ -341,7 +348,7 @@ SET deleted    = FALSE,
     deleted_at = NULL,
     updated_at = NOW()
 WHERE id = $1::UUID
-RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at;
+RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at, likes;
 `
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
@@ -370,6 +377,7 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 		&t.IsLocked,
 		&t.Deleted,
 		&t.DeletedAt,
+		&t.Likes,
 	)
 	if err != nil {
 		return nil, handleError(err, logger)
@@ -384,7 +392,7 @@ func (m *ThreadModel) Delete(ctx context.Context, id uuid.UUID) (*Thread, error)
 DELETE
 FROM forum.threads
 WHERE id = $1
-RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at;
+RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at, likes;
 `
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
@@ -413,6 +421,7 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 		&t.IsLocked,
 		&t.Deleted,
 		&t.DeletedAt,
+		&t.Likes,
 	)
 	if err != nil {
 		return nil, handleError(err, logger)
