@@ -20,7 +20,7 @@ type Post struct {
 	// ThreadID is the ID of the parent thread.
 	ThreadID uuid.UUID `json:"threadId"`
 	// ReplyTo is the ID of which this post is a reply to.
-	ReplyTo *uuid.UUID `json:"replyTo"`
+	ReplyTo uuid.NullUUID `json:"replyTo"`
 	// AuthorID is the unique identifier of the author of the post.
 	AuthorID uuid.UUID `json:"authorId"`
 	// Context is the actual text content of a post
@@ -68,7 +68,7 @@ WHERE id = $1::UUID;
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("query", query),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.Any("id", id),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -133,7 +133,7 @@ LIMIT $1::INTEGER;
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("query", query),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.Any("filters", filters),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -202,7 +202,7 @@ func (m *PostModel) Insert(ctx context.Context, input Post) (*Post, error) {
 	const query string = `
 INSERT INTO forum.posts(thread_id, reply_to, content, author_id)
 VALUES ($1::UUID,
-        ($2::UUID IS NULL OR reply_to = $2::UUID),
+        $2::UUID,
         $3::VARCHAR(256),
         $4::UUID)
 RETURNING id,
@@ -219,7 +219,7 @@ RETURNING id,
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("query", query),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.Any("input", input),
 		slog.Duration("timeout", *m.Timeout),
 	))
