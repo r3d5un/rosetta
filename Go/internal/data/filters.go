@@ -15,6 +15,8 @@ type Metadata struct {
 type Filters struct {
 	ID            *uuid.UUID `json:"id"`
 	OwnerID       *uuid.UUID `json:"ownerId"`
+	UserID        *uuid.UUID `json:"userId"`
+	PostID        *uuid.UUID `json:"postId"`
 	ForumID       *uuid.UUID `json:"forumId"`
 	AuthorID      *uuid.UUID `json:"authorId"`
 	Name          *string    `json:"name"`
