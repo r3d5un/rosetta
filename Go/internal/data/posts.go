@@ -197,3 +197,61 @@ LIMIT $1::INTEGER;
 	logger.Info("posts selected", slog.Any("metadata", metadata))
 	return posts, &metadata, nil
 }
+
+func (m *PostModel) Insert(ctx context.Context, input Post) (*Post, error) {
+	const query string = `
+INSERT INTO forum.posts(thread_id, reply_to, content, author_id)
+VALUES ($1::UUID,
+        ($2::UUID IS NULL OR reply_to = $2::UUID),
+        $3::VARCHAR(256),
+        $4::UUID)
+RETURNING id,
+    thread_id,
+    reply_to,
+    author_id,
+    content,
+    created_at,
+    updated_at,
+    likes,
+    deleted,
+    deleted_at;
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("query", query),
+		slog.Any("input", input),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
+	defer cancel()
+
+	logger.Info("performing query")
+	var p Post
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		input.ThreadID,
+		input.ReplyTo,
+		input.Content,
+		input.AuthorID,
+	).Scan(
+		&p.ID,
+		&p.ThreadID,
+		&p.ReplyTo,
+		&p.AuthorID,
+		&p.Content,
+		&p.CreatedAt,
+		&p.UpdatedAt,
+		&p.Likes,
+		&p.Deleted,
+		&p.DeletedAt,
+	)
+	if err != nil {
+		return nil, handleError(err, logger)
+	}
+	logger.Info("post inserted", slog.Any("post", p))
+
+	return &p, nil
+}
