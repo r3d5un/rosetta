@@ -117,16 +117,15 @@ SELECT id,
 FROM forum.posts
 WHERE ($2::UUID IS NULL OR id = $2::UUID)
   AND ($3::UUID IS NULL OR thread_id = $3::UUID)
-  AND ($4::VARCHAR(256) IS NULL OR title = $4::VARCHAR(256))
-  AND ($5::UUID IS NULL OR author_id = $5::UUID)
-  AND ($6::TIMESTAMP IS NULL or created_at >= $6::TIMESTAMP)
-  AND ($7::TIMESTAMP IS NULL or created_at <= $7::TIMESTAMP)
-  AND ($8::TIMESTAMP IS NULL or updated_at >= $8::TIMESTAMP)
-  AND ($9::TIMESTAMP IS NULL or updated_at <= $9::TIMESTAMP)
-  AND ($10::BOOLEAN IS NULL or deleted = $10::BOOLEAN)
-  AND ($11::TIMESTAMP IS NULL or deleted_at >= $11::TIMESTAMP)
-  AND ($12::TIMESTAMP IS NULL or deleted_at <= $12::TIMESTAMP)
-  AND id > $14::UUID
+  AND ($4::UUID IS NULL OR author_id = $4::UUID)
+  AND ($5::TIMESTAMP IS NULL or created_at >= $5::TIMESTAMP)
+  AND ($6::TIMESTAMP IS NULL or created_at <= $6::TIMESTAMP)
+  AND ($7::TIMESTAMP IS NULL or updated_at >= $7::TIMESTAMP)
+  AND ($8::TIMESTAMP IS NULL or updated_at <= $8::TIMESTAMP)
+  AND ($9::BOOLEAN IS NULL or deleted = $9::BOOLEAN)
+  AND ($10::TIMESTAMP IS NULL or deleted_at >= $10::TIMESTAMP)
+  AND ($11::TIMESTAMP IS NULL or deleted_at <= $11::TIMESTAMP)
+  AND id > $12::UUID
 ` + CreateOrderByClause(filters.OrderBy) + `
 LIMIT $1::INTEGER;
 `
@@ -145,7 +144,6 @@ LIMIT $1::INTEGER;
 		filters.PageSize,
 		filters.ID,
 		filters.ThreadID,
-		filters.Title,
 		filters.AuthorID,
 		filters.CreatedAtFrom,
 		filters.CreatedAtTo,

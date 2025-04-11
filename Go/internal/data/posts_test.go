@@ -49,9 +49,16 @@ func TestPostModel(t *testing.T) {
 	})
 
 	t.Run("Select", func(t *testing.T) {
+		selectedPost, err := models.Posts.Select(ctx, newPost.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, newPost, *selectedPost)
 	})
 
 	t.Run("SelectAll", func(t *testing.T) {
+		selectedPosts, metadata, err := models.Posts.SelectAll(ctx, data.Filters{PageSize: 25})
+		assert.NoError(t, err)
+		assert.NotEmpty(t, metadata.LastSeen)
+		assert.GreaterOrEqual(t, len(selectedPosts), 0)
 	})
 
 	t.Run("Update", func(t *testing.T) {
