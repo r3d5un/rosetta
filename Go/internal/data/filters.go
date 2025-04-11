@@ -17,6 +17,7 @@ type Filters struct {
 	OwnerID       *uuid.UUID `json:"ownerId"`
 	UserID        *uuid.UUID `json:"userId"`
 	PostID        *uuid.UUID `json:"postId"`
+	ThreadID      *uuid.UUID `json:"threadId"`
 	ForumID       *uuid.UUID `json:"forumId"`
 	AuthorID      *uuid.UUID `json:"authorId"`
 	Name          *string    `json:"name"`
