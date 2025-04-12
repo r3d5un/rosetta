@@ -3,7 +3,7 @@ import uuid
 from typing import Optional
 
 from sqlalchemy import Engine
-from sqlmodel import Field, Session, SQLModel
+from sqlmodel import Field, Session, SQLModel, select
 
 
 class User(SQLModel, table=True):
@@ -24,6 +24,9 @@ class User(SQLModel, table=True):
 class UserModel:
     def __init__(self, engine: Engine):
         self.engine = engine
+
+    def select(self, id: uuid.UUID) -> User | None:
+        return Session(self.engine).exec(select(User).where(User.id == id)).first()
 
     def insert(self, user: User) -> User:
         session = Session(self.engine)
