@@ -85,5 +85,8 @@ func TestPostModel(t *testing.T) {
 	})
 
 	t.Run("Delete", func(t *testing.T) {
+		deletedPost, err := models.Posts.Delete(ctx, newPost.ID)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, deletedPost)
 	})
 }
