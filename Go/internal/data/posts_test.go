@@ -73,6 +73,9 @@ func TestPostModel(t *testing.T) {
 	})
 
 	t.Run("SoftDelete", func(t *testing.T) {
+		deletedPost, err := models.Posts.SoftDelete(ctx, newPost.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, deletedPost.Deleted, true)
 	})
 
 	t.Run("Restore", func(t *testing.T) {

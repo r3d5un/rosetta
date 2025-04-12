@@ -318,3 +318,58 @@ RETURNING id,
 
 	return &p, nil
 }
+
+func (m *PostModel) SoftDelete(ctx context.Context, id uuid.UUID) (*Post, error) {
+	const query string = `
+UPDATE forum.posts
+SET deleted    = TRUE,
+    deleted_at = NOW(),
+    updated_at = NOW()
+WHERE id = $1::UUID
+RETURNING id,
+    thread_id,
+    reply_to,
+    author_id,
+    content,
+    created_at,
+    updated_at,
+    likes,
+    deleted,
+    deleted_at;
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("query", logging.MinifySQL(query)),
+		slog.String("id", id.String()),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
+	defer cancel()
+
+	logger.Info("performing query")
+	var p Post
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		id,
+	).Scan(
+		&p.ID,
+		&p.ThreadID,
+		&p.ReplyTo,
+		&p.AuthorID,
+		&p.Content,
+		&p.CreatedAt,
+		&p.UpdatedAt,
+		&p.Likes,
+		&p.Deleted,
+		&p.DeletedAt,
+	)
+	if err != nil {
+		return nil, handleError(err, logger)
+	}
+	logger.Info("post marked deleted", slog.Any("post", p))
+
+	return &p, nil
+}
