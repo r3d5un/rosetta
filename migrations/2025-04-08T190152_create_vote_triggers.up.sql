@@ -26,18 +26,18 @@ DROP TRIGGER IF EXISTS trigger_thread_vote_sum_on_delete ON forum.thread_votes;
 
 CREATE TRIGGER trigger_thread_vote_sum_update_on_insert
     AFTER INSERT
-    ON forum.post_votes
+    ON forum.thread_votes
     FOR EACH ROW
 EXECUTE FUNCTION update_thread_likes();
 
 CREATE TRIGGER trigger_thread_vote_sum_update_on_update
     AFTER UPDATE
-    ON forum.post_votes
+    ON forum.thread_votes
     FOR EACH ROW
 EXECUTE FUNCTION update_thread_likes();
 
 CREATE TRIGGER trigger_thread_vote_sum_update_on_delete
     AFTER DELETE
-    ON forum.post_votes
+    ON forum.thread_votes
     FOR EACH ROW
 EXECUTE FUNCTION update_thread_likes();
