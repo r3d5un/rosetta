@@ -23,7 +23,7 @@ type Post struct {
 	ReplyTo uuid.NullUUID `json:"replyTo"`
 	// AuthorID is the unique identifier of the author of the post.
 	AuthorID uuid.UUID `json:"authorId"`
-	// Context is the actual text content of a post
+	// Content is the actual text content of a post
 	Content string `json:"content"`
 	// CreatedAt denotes when a post was created.
 	//
@@ -43,6 +43,15 @@ type Post struct {
 	//
 	// This field is ignored when updating or creating new post.
 	DeletedAt sql.NullTime `json:"deletedAt,omitzero"`
+}
+
+type PostPatch struct {
+	// ID is the unique identifier of the post
+	ID uuid.UUID `json:"id"`
+	// ThreadID is the ID of the parent thread.
+	ThreadID uuid.UUID `json:"threadId"`
+	// Content is the actual text content of a post
+	Content *string `json:"content"`
 }
 
 type PostModel struct {
@@ -250,6 +259,62 @@ RETURNING id,
 		return nil, handleError(err, logger)
 	}
 	logger.Info("post inserted", slog.Any("post", p))
+
+	return &p, nil
+}
+
+func (m *PostModel) Update(ctx context.Context, input PostPatch) (*Post, error) {
+	const query string = `
+UPDATE forum.posts
+SET content = COALESCE($3::TEXT, content)
+WHERE id = $1
+  AND thread_id = $2
+RETURNING id,
+    thread_id,
+    reply_to,
+    author_id,
+    content,
+    created_at,
+    updated_at,
+    likes,
+    deleted,
+    deleted_at;
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("query", logging.MinifySQL(query)),
+		slog.Any("input", input),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
+	defer cancel()
+
+	logger.Info("performing query")
+	var p Post
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		input.ID,
+		input.ThreadID,
+		input.Content,
+	).Scan(
+		&p.ID,
+		&p.ThreadID,
+		&p.ReplyTo,
+		&p.AuthorID,
+		&p.Content,
+		&p.CreatedAt,
+		&p.UpdatedAt,
+		&p.Likes,
+		&p.Deleted,
+		&p.DeletedAt,
+	)
+	if err != nil {
+		return nil, handleError(err, logger)
+	}
+	logger.Info("post updated", slog.Any("post", p))
 
 	return &p, nil
 }

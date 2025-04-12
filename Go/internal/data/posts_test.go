@@ -62,6 +62,14 @@ func TestPostModel(t *testing.T) {
 	})
 
 	t.Run("Update", func(t *testing.T) {
+		updatedContent := "A rogue taxi is nearby, here are the precise coordinates: 1.1.1.1"
+		updatedPost, err := models.Posts.Update(ctx, data.PostPatch{
+			ID:       newPost.ID,
+			ThreadID: newPost.ThreadID,
+			Content:  &updatedContent,
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, updatedPost.Content, updatedContent)
 	})
 
 	t.Run("SoftDelete", func(t *testing.T) {
