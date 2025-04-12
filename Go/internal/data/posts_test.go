@@ -79,6 +79,9 @@ func TestPostModel(t *testing.T) {
 	})
 
 	t.Run("Restore", func(t *testing.T) {
+		deletedPost, err := models.Posts.Restore(ctx, newPost.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, deletedPost.Deleted, false)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
