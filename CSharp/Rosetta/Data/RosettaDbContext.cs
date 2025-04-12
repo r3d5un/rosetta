@@ -4,5 +4,5 @@ namespace Rosetta.Data;
 
 public class RosettaDbContext(DbContextOptions<RosettaDbContext> options) : DbContext(options)
 {
-    // TODO: Add DbSets
+    public DbSet<User> Users { get; set; }
 }
