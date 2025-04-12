@@ -31,6 +31,7 @@ class UserModel:
     def insert(self, user: User) -> User:
         session = Session(self.engine)
         session.add(user)
+        session.commit()
         session.refresh(user)
         session.close()
         return user
