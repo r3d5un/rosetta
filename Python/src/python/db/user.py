@@ -35,3 +35,21 @@ class UserModel:
         session.refresh(user)
         session.close()
         return user
+
+    def update(self, user_patch: User) -> User | None:
+        with Session(self.engine) as session:
+            user = session.exec(select(User).where(User.id == user_patch.id)).first()
+            if user is None:
+                return None
+            if user_patch.name != "" and user_patch.name is not None:
+                user.name = user_patch.name
+            if user_patch.username != "" and user_patch.username is not None:
+                user.username = user_patch.username
+            if user_patch.email != "" and user_patch.email is not None:
+                user.username = user_patch.username
+            user_patch.updated_at = datetime.datetime.now()
+
+            session.commit()
+            session.refresh(user)
+
+            return user
