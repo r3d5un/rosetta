@@ -2,7 +2,6 @@ import logging
 
 import structlog
 from fastapi import FastAPI, Request
-from starlette.routing import request_response
 
 from src.python.api.healtcheck import router as healthcheck_router
 
