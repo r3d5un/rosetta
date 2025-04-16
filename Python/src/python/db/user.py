@@ -7,6 +7,9 @@ from sqlmodel import Field, Session, SQLModel, select
 
 
 class User(SQLModel, table=True):
+    __tablename__ = "users"  # type: ignore
+    __table_args__ = {"schema": "forum"}
+
     id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(nullable=False, max_length=256)
     username: str = Field(nullable=False, max_length=256)
