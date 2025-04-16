@@ -46,7 +46,7 @@ class UserModel:
             if user_patch.username != "" and user_patch.username is not None:
                 user.username = user_patch.username
             if user_patch.email != "" and user_patch.email is not None:
-                user.username = user_patch.username
+                user.email = user_patch.email
             user_patch.updated_at = datetime.datetime.now()
 
             session.commit()
