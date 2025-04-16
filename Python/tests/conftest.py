@@ -18,12 +18,6 @@ def setup_database(request):
         postgres.stop()
 
     request.addfinalizer(remove_container)
-    os.environ["DB_CONN"] = postgres.get_connection_url()
-    os.environ["DB_HOST"] = postgres.get_container_host_ip()
-    os.environ["DB_PORT"] = str(postgres.get_exposed_port(5432))
-    os.environ["DB_USERNAME"] = postgres.username
-    os.environ["DB_PASSWORD"] = postgres.password
-    os.environ["DB_NAME"] = postgres.dbname
 
 
 @pytest.fixture(scope="function")
@@ -32,11 +26,11 @@ def db_connection():
 
 
 def get_connection() -> psycopg.Connection:
-    host = os.getenv("DB_HOST", "localhost")
-    port = os.getenv("DB_PORT", "5432")
-    username = os.getenv("DB_USERNAME", "postgres")
-    password = os.getenv("DB_PASSWORD", "postgres")
-    database = os.getenv("DB_NAME", "postgres")
+    host = postgres.get_container_host_ip()
+    port = str(postgres.get_exposed_port(5432))
+    username = postgres.username
+    password = postgres.password
+    database = postgres.dbname
 
     return psycopg.connect(
         f"host={host} dbname={database} user={username} password={password} port={port}"
@@ -75,8 +69,11 @@ def get_testcontainer_db_engine() -> Engine:
     username = postgres.username
     password = postgres.password
     database = postgres.dbname
+
+    postgres.start()
+
     return create_engine(
-        f"postgresql://{username}:{password}@{host}:{port}/{database}?sslmod=disable",
+        f"postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable",
         echo=True,
     )
 
