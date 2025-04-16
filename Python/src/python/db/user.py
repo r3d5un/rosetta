@@ -63,3 +63,13 @@ class UserModel:
             session.commit()
             session.refresh(user)
             return user
+
+    def restore(self, id: uuid.UUID) -> User | None:
+        with Session(self.engine) as session:
+            user = session.exec(select(User).where(User.id == id)).first()
+            if user is None:
+                return None
+            user.deleted = False
+            session.commit()
+            session.refresh(user)
+            return user
