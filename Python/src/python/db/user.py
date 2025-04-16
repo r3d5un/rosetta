@@ -53,3 +53,13 @@ class UserModel:
             session.refresh(user)
 
             return user
+
+    def soft_delete(self, id: uuid.UUID) -> User | None:
+        with Session(self.engine) as session:
+            user = session.exec(select(User).where(User.id == id)).first()
+            if user is None:
+                return None
+            user.deleted = True
+            session.commit()
+            session.refresh(user)
+            return user
