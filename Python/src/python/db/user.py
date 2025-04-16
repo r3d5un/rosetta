@@ -29,12 +29,12 @@ class UserModel:
         return Session(self.engine).exec(select(User).where(User.id == id)).first()
 
     def insert(self, user: User) -> User:
-        session = Session(self.engine)
-        session.add(user)
-        session.commit()
-        session.refresh(user)
-        session.close()
-        return user
+        with Session(self.engine) as session:
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            session.close()
+            return user
 
     def update(self, user_patch: User) -> User | None:
         with Session(self.engine) as session:
