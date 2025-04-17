@@ -4,8 +4,10 @@ import structlog
 from fastapi import FastAPI, Request
 
 from src.python.api.healtcheck import router as healthcheck_router
+from src.python.core.config import read_config
 
 app = FastAPI()
+cfg = read_config()
 
 for name in logging.root.manager.loggerDict:
     logging.getLogger(name).setLevel(logging.CRITICAL)
