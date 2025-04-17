@@ -70,8 +70,6 @@ def get_testcontainer_db_engine() -> Engine:
     password = postgres.password
     database = postgres.dbname
 
-    postgres.start()
-
     return create_engine(
         f"postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=disable",
         echo=True,
