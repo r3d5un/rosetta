@@ -116,6 +116,28 @@ def test_soft_delete():
         raise ValueError("deleted user is None")
     assert deleted_user.deleted is True
 
+
+def test_restore():
+    user_model = UserModel(get_testcontainer_db_engine())
+
+    try:
+        inserted_user = user_model.insert(test_user)
+    except Exception as e:
+        raise Exception(f"error upon inserting user: {e}")
+    if inserted_user is None:
+        raise ValueError("no user returnd upon insertion")
+    if inserted_user.id is None:
+        raise ValueError("inserted user ID is None")
+
+    try:
+        deleted_user = user_model.restore(inserted_user.id)
+    except Exception as e:
+        raise ValueError(f"unable to update user: {e}")
+    if deleted_user is None:
+        raise ValueError("deleted user is None")
+    assert deleted_user.deleted is False
+
+
 def test_something():
     with get_connection().cursor() as c:
         c.execute("SELECT * FROM forum.users")
