@@ -2,6 +2,7 @@ import logging
 
 import structlog
 from fastapi import FastAPI, Request
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from src.python.api.healtcheck import router as healthcheck_router
 from src.python.core.config import read_config
@@ -53,3 +54,4 @@ async def log_request_middleware(request: Request, call_next):
 
 
 app.include_router(healthcheck_router)
+FastAPIInstrumentor.instrument_app(app)
