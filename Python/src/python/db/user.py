@@ -73,12 +73,42 @@ class UserModel:
                 raise e
 
     def insert(self, user: User) -> User:
-        with Session(self.engine) as session:
-            session.add(user)
-            session.commit()
-            session.refresh(user)
-            session.close()
-            return user
+        query = text(
+            """
+            INSERT INTO forum.users(name, username, email)
+            VALUES (:name, :username, :email)
+            RETURNING id, name, username, email, created_at, updated_at, deleted, deleted_at;
+            """
+        )
+
+        session = sessionmaker(bind=self.engine)()
+        with session:
+            try:
+                results = session.execute(
+                    query,
+                    {"name": user.name, "username": user.username, "email": user.email},
+                )
+                session.commit()
+                users = [
+                    User(
+                        id=row.id,
+                        name=row.name,
+                        username=row.username,
+                        email=row.email,
+                        created_at=row.created_at,
+                        updated_at=row.updated_at,
+                        deleted=row.deleted,
+                        deleted_at=row.deleted_at,
+                    )
+                    for row in results
+                ]
+
+                if len(users) < 1:
+                    raise NoResultFound
+
+                return users[0]
+            except Exception as e:
+                raise e
 
     def update(self, user_patch: User) -> User | None:
         with Session(self.engine) as session:
