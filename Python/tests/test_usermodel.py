@@ -1,4 +1,5 @@
 from python.db.user import User, UserModel, UserPatch
+from src.python.db.filters import Filter, Metadata
 from tests.conftest import get_connection, get_testcontainer_db_engine
 
 test_user = User(
@@ -39,6 +40,34 @@ def test_select():
     assert selected_user.name == inserted_user.name
     assert selected_user.username == inserted_user.username
     assert selected_user.email == inserted_user.email
+
+
+def test_select_all():
+    user_model = UserModel(get_testcontainer_db_engine())
+
+    try:
+        inserted_user = user_model.insert(test_user)
+    except Exception as e:
+        raise Exception(f"error upon inserting user: {e}")
+    if inserted_user is None:
+        raise ValueError("no user returnd upon insertion")
+    if inserted_user.id is None:
+        raise ValueError("inserted user ID is None")
+
+    result: tuple[list[User] | None, Metadata | None] | None = user_model.select_all(
+        Filter(page_size=100)
+    )
+    if result is None:
+        raise ValueError("no results returned")
+    users = result[0]
+    metadata = result[1]
+
+    if users is None:
+        raise ValueError("users is None")
+    assert len(users) > 0
+    if metadata is None:
+        raise ValueError("metadata is None")
+    assert metadata.response_length == len(users)
 
 
 def test_update():

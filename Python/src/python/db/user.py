@@ -7,6 +7,8 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Field, Session, SQLModel, select
 
+from src.python.db.filters import Filter, Metadata
+
 
 class User(SQLModel, table=True):
     __tablename__ = "users"  # type: ignore
@@ -66,6 +68,69 @@ class UserModel:
                     deleted=row.deleted,
                     deleted_at=row.deleted_at,
                 )
+            except Exception as e:
+                raise e
+
+    def select_all(
+        self, filters: Filter
+    ) -> tuple[list[User] | None, Metadata | None] | None:
+        query = text(
+            f"""
+            SELECT id, name, username, email, created_at, updated_at, deleted, deleted_at
+            FROM forum.users
+            WHERE (:id IS NULL OR id = :id)
+              AND (:name IS NULL or name = :name)
+              AND (:username IS NULL or username = :username)
+              AND (:email IS NULL or email = :email)
+              AND (:created_at_from IS NULL or created_at >= :created_at_from)
+              AND (:created_at_to IS NULL or created_at <= :created_at_to)
+              AND (:updated_at_from IS NULL or updated_at >= :updated_at_from)
+              AND (:updated_at_to IS NULL or updated_at <= :updated_at_to)
+            {filters.create_order_by_clause()}
+            LIMIT :page_size
+            """
+        )
+        session = sessionmaker(bind=self.engine)()
+        with session:
+            try:
+                rows = session.execute(
+                    query,
+                    {
+                        "page_size": filters.page_size,
+                        "id": filters.id,
+                        "name": filters.name,
+                        "username": filters.username,
+                        "email": filters.email,
+                        "created_at_from": filters.created_at_from,
+                        "created_at_to": filters.created_at_to,
+                        "updated_at_from": filters.updated_at_from,
+                        "updated_at_to": filters.updated_at_to,
+                    },
+                ).fetchall()
+                users = [
+                    User(
+                        id=row.id,
+                        name=row.name,
+                        username=row.username,
+                        email=row.email,
+                        created_at=row.created_at,
+                        updated_at=row.updated_at,
+                        deleted=row.deleted,
+                        deleted_at=row.deleted_at,
+                    )
+                    for row in rows
+                ]
+                length = len(users)
+                metadata = Metadata()
+                if length > 0:
+                    id = users[length - 1].id
+                    if id is not None:
+                        metadata.last_seen = id
+                    metadata.next = True
+                metadata.response_length = length
+
+                return (users, metadata)
+
             except Exception as e:
                 raise e
 
