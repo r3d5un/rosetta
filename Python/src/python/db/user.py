@@ -2,7 +2,9 @@ import datetime
 import uuid
 from typing import Optional
 
-from sqlalchemy import Engine
+from sqlalchemy import Engine, text
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm import sessionmaker
 from sqlmodel import Field, Session, SQLModel, select
 
 
@@ -36,7 +38,39 @@ class UserModel:
         self.engine = engine
 
     def select(self, id: uuid.UUID) -> User | None:
-        return Session(self.engine).exec(select(User).where(User.id == id)).first()
+        query = text(
+            """
+            SELECT id, name, username, email, created_at, updated_at, deleted, deleted_at
+            FROM forum.users
+            WHERE id = :id;
+            """
+        )
+
+        session = sessionmaker(bind=self.engine)()
+        with session:
+            try:
+                results = session.execute(query, {"id": id})
+                session.commit()
+                users = [
+                    User(
+                        id=row.id,
+                        name=row.name,
+                        username=row.username,
+                        email=row.email,
+                        created_at=row.created_at,
+                        updated_at=row.updated_at,
+                        deleted=row.deleted,
+                        deleted_at=row.deleted_at,
+                    )
+                    for row in results
+                ]
+
+                if len(users) < 1:
+                    raise NoResultFound
+
+                return users[0]
+            except Exception as e:
+                raise e
 
     def insert(self, user: User) -> User:
         with Session(self.engine) as session:
