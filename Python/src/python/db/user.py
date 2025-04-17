@@ -8,17 +8,14 @@ from sqlalchemy.orm import sessionmaker
 from sqlmodel import Field, Session, SQLModel, select
 
 
-class UserBase(SQLModel):
-    name: str = Field(nullable=False, max_length=256)
-    username: str = Field(nullable=False, max_length=256)
-    email: str = Field(nullable=False, max_length=256)
-
-
-class User(UserBase, table=True):
+class User(SQLModel, table=True):
     __tablename__ = "users"  # type: ignore
     __table_args__ = {"schema": "forum"}
 
     id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(nullable=False, max_length=256)
+    username: str = Field(nullable=False, max_length=256)
+    email: str = Field(nullable=False, max_length=256)
     created_at: Optional[datetime.datetime] = Field(
         nullable=False, default_factory=datetime.datetime.now
     )
@@ -29,8 +26,14 @@ class User(UserBase, table=True):
     deleted_at: Optional[datetime.datetime] = Field(nullable=True, default=None)
 
 
-class UserCreate(UserBase):
-    pass
+class UserPatch(SQLModel):
+    __tablename__ = "users"  # type: ignore
+    __table_args__ = {"schema": "forum"}
+
+    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: Optional[str] = Field(default=None, nullable=False, max_length=256)
+    username: Optional[str] = Field(default=None, nullable=False, max_length=256)
+    email: Optional[str] = Field(default=None, nullable=False, max_length=256)
 
 
 class UserModel:
@@ -110,23 +113,55 @@ class UserModel:
             except Exception as e:
                 raise e
 
-    def update(self, user_patch: User) -> User | None:
-        with Session(self.engine) as session:
-            user = session.exec(select(User).where(User.id == user_patch.id)).first()
-            if user is None:
-                return None
-            if user_patch.name != "" and user_patch.name is not None:
-                user.name = user_patch.name
-            if user_patch.username != "" and user_patch.username is not None:
-                user.username = user_patch.username
-            if user_patch.email != "" and user_patch.email is not None:
-                user.email = user_patch.email
-            user_patch.updated_at = datetime.datetime.now()
+    def update(self, user_patch: UserPatch) -> User | None:
+        query = text(
+            """
+            UPDATE forum.users
+            SET name       = COALESCE(:name, name),
+                username   = COALESCE(:username, username),
+                email      = COALESCE(:email, email),
+                updated_at = NOW()
+            WHERE id = :id
+            RETURNING id, name, username, email, created_at, updated_at, deleted, deleted_at;
+            """
+        )
 
-            session.commit()
-            session.refresh(user)
+        session = sessionmaker(bind=self.engine)()
+        with session:
+            try:
+                parameters = {
+                    "id": user_patch.id,
+                    "name": (user_patch.name if user_patch.name is not None else None),
+                    "username": (
+                        user_patch.username if user_patch.username is not None else None
+                    ),
+                    "email": (
+                        user_patch.email if user_patch.email is not None else None
+                    ),
+                }
+                results = session.execute(
+                    query,
+                    parameters,
+                )
+                session.commit()
+                users = [
+                    User(
+                        id=row.id,
+                        name=row.name,
+                        username=row.username,
+                        email=row.email,
+                        created_at=row.created_at,
+                        updated_at=row.updated_at,
+                    )
+                    for row in results
+                ]
 
-            return user
+                if len(users) < 1:
+                    raise NoResultFound
+
+                return users[0]
+            except Exception as e:
+                raise e
 
     def soft_delete(self, id: uuid.UUID) -> User | None:
         with Session(self.engine) as session:
