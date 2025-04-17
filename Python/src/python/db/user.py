@@ -6,22 +6,29 @@ from sqlalchemy import Engine
 from sqlmodel import Field, Session, SQLModel, select
 
 
-class User(SQLModel, table=True):
+class UserBase(SQLModel):
+    name: str = Field(nullable=False, max_length=256)
+    username: str = Field(nullable=False, max_length=256)
+    email: str = Field(nullable=False, max_length=256)
+
+
+class User(UserBase, table=True):
     __tablename__ = "users"  # type: ignore
     __table_args__ = {"schema": "forum"}
 
     id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str = Field(nullable=False, max_length=256)
-    username: str = Field(nullable=False, max_length=256)
-    email: str = Field(nullable=False, max_length=256)
     created_at: Optional[datetime.datetime] = Field(
         nullable=False, default_factory=datetime.datetime.now
     )
     updated_at: Optional[datetime.datetime] = Field(
         nullable=False, default_factory=datetime.datetime.now
     )
-    deleted: Optional[bool] = Field(default=True, nullable=False)
+    deleted: Optional[bool] = Field(default=False, nullable=False)
     deleted_at: Optional[datetime.datetime] = Field(nullable=True, default=None)
+
+
+class UserCreate(UserBase):
+    pass
 
 
 class UserModel:
