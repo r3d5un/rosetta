@@ -153,9 +153,9 @@ def test_delete():
     try:
         deleted_user = user_model.delete(inserted_user.id)
     except Exception as e:
-        raise ValueError(f"unable to update user: {e}")
+        raise ValueError(f"unable to restore user: {e}")
     if deleted_user is None:
-        raise ValueError("deleted user is None")
+        raise ValueError("restored user is None")
 
 
 def test_something():

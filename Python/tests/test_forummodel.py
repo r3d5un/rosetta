@@ -168,3 +168,36 @@ def test_soft_delete():
     if deleted_forum is None:
         raise ValueError("deleted forum is None")
     assert deleted_forum.deleted is True
+
+
+def test_restore():
+    models = Models(engine=get_testcontainer_db_engine())
+    user = User(
+        name="Saburo Arasaka", username="s.arasaka", email="s.arasaka@arasaka.com"
+    )
+    try:
+        user = models.users.insert(user)
+    except Exception as e:
+        raise Exception(f"error upon inserting user: {e}")
+    if user is None:
+        raise ValueError("no user returnd upon insertion")
+    if user.id is None:
+        raise ValueError("inserted user ID is None")
+
+    forum = Forum(owner_id=user.id, name="Crushing Militech", description="")
+    try:
+        forum = models.forums.insert(forum)
+    except Exception as e:
+        raise Exception(f"error upon inserting forum: {e}")
+    if forum is None:
+        raise ValueError("no forum returnd upon insertion")
+    if forum.id is None:
+        raise ValueError("inserted forum ID is None")
+
+    try:
+        forum = models.forums.restore(forum.id)
+    except Exception as e:
+        raise ValueError(f"unable to restore forum: {e}")
+    if forum is None:
+        raise ValueError("restored forum is None")
+    assert forum.deleted is False
