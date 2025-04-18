@@ -83,7 +83,7 @@ class ForumModel:
               AND (:updated_at_to IS NULL or updated_at <= :updated_at_to)
               AND (:deleted IS NULL or deleted = :deleted)
               AND (:deleted_at_from IS NULL or deleted_at >= :deleted_at_from)
-              AND (:delted_at_to IS NULL or deleted_at <= :delted_at_to)
+              AND (:deleted_at_to IS NULL or deleted_at <= :deleted_at_to)
               AND id > :last_seen
             {filters.create_order_by_clause()}
             LIMIT :page_size
@@ -97,6 +97,7 @@ class ForumModel:
                     {
                         "page_size": filters.page_size,
                         "id": filters.id,
+                        "owner_id": filters.owner_id,
                         "name": filters.name,
                         "username": filters.username,
                         "email": filters.email,
@@ -105,11 +106,12 @@ class ForumModel:
                         "updated_at_from": filters.updated_at_from,
                         "updated_at_to": filters.updated_at_to,
                         "deleted_at_from": filters.deleted_at_from,
-                        "deleted_at_to": filters.deleted_at_from,
+                        "deleted_at_to": filters.deleted_at_to,
+                        "deleted": filters.deleted,
                         "last_seen": filters.last_seen,
                     },
                 ).fetchall()
-                users = [
+                forums = [
                     Forum(
                         id=row.id,
                         owner_id=row.owner_id,
@@ -122,16 +124,16 @@ class ForumModel:
                     )
                     for row in rows
                 ]
-                length = len(users)
+                length = len(forums)
                 metadata = Metadata()
                 if length > 0:
-                    id = users[length - 1].id
+                    id = forums[length - 1].id
                     if id is not None:
                         metadata.last_seen = id
                     metadata.next = True
                 metadata.response_length = length
 
-                return (users, metadata)
+                return (forums, metadata)
 
             except Exception as e:
                 raise e
