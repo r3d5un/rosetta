@@ -14,7 +14,7 @@ class Forum(SQLModel, table=True):
     __tablename__ = "forums"  # type: ignore
     __table_args__ = {"schema": "forum"}
 
-    id: uuid.UUID = Field(primary_key=True)
+    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     owner_id: uuid.UUID = Field()
     name: str = Field(nullable=False, max_length=256)
     description: str = Field(nullable=False)
@@ -28,7 +28,7 @@ class ForumPatch(SQLModel):
     __tablename__ = "users"  # type: ignore
     __table_args__ = {"schema": "forum"}
 
-    id: uuid.UUID = Field(primary_key=True)
+    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     owner_id: uuid.UUID = Field()
     name: str = Field(nullable=False, max_length=256)
     description: str = Field(nullable=False)
