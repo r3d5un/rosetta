@@ -28,10 +28,10 @@ class ForumPatch(SQLModel):
     __tablename__ = "users"  # type: ignore
     __table_args__ = {"schema": "forum"}
 
-    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field()
-    name: str = Field(nullable=False, max_length=256)
-    description: str = Field(nullable=False)
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    owner_id: Optional[uuid.UUID] = Field(default=None)
+    name: Optional[str] = Field(default=None, nullable=False, max_length=256)
+    description: Optional[str] = Field(default=None, nullable=False)
 
 
 class ForumModel:

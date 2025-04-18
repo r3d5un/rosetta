@@ -1,5 +1,5 @@
 from python.db.filters import Filter, Metadata
-from python.db.forum import Forum
+from python.db.forum import Forum, ForumPatch
 from python.db.session import Models
 from python.db.user import User
 from tests.conftest import get_testcontainer_db_engine
@@ -98,3 +98,40 @@ def test_select_all():
     if metadata is None:
         raise ValueError("metadata is None")
     assert metadata.response_length == len(forums)
+
+
+def test_update():
+    models = Models(engine=get_testcontainer_db_engine())
+    user = User(
+        name="Saburo Arasaka", username="s.arasaka", email="s.arasaka@arasaka.com"
+    )
+    try:
+        user = models.users.insert(user)
+    except Exception as e:
+        raise Exception(f"error upon inserting user: {e}")
+    if user is None:
+        raise ValueError("no user returnd upon insertion")
+    if user.id is None:
+        raise ValueError("inserted user ID is None")
+
+    forum = Forum(owner_id=user.id, name="Crushing Militech", description="")
+    try:
+        inserted_forum = models.forums.insert(forum)
+    except Exception as e:
+        raise Exception(f"error upon inserting forum: {e}")
+    if inserted_forum is None:
+        raise ValueError("no forum returnd upon insertion")
+    if inserted_forum.id is None:
+        raise ValueError("inserted forum ID is None")
+
+    description = "test description"
+    update = ForumPatch(id=inserted_forum.id, description=description)
+    try:
+        updated_forum = models.forums.update(update)
+    except Exception as e:
+        raise ValueError(f"unable to update forum: {e}")
+    if updated_forum is None:
+        raise ValueError("inserted username is None")
+    if updated_forum.description is None:
+        raise ValueError("inserted username is None")
+    assert updated_forum.description == description
