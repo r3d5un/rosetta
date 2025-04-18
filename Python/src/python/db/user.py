@@ -86,6 +86,7 @@ class UserModel:
               AND (:created_at_to IS NULL or created_at <= :created_at_to)
               AND (:updated_at_from IS NULL or updated_at >= :updated_at_from)
               AND (:updated_at_to IS NULL or updated_at <= :updated_at_to)
+              AND id > :last_seen
             {filters.create_order_by_clause()}
             LIMIT :page_size
             """
@@ -105,6 +106,7 @@ class UserModel:
                         "created_at_to": filters.created_at_to,
                         "updated_at_from": filters.updated_at_from,
                         "updated_at_to": filters.updated_at_to,
+                        "last_seen": filters.last_seen,
                     },
                 ).fetchall()
                 users = [
