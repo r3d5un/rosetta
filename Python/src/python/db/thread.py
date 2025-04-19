@@ -31,9 +31,9 @@ class ThreadPatch(SQLModel):
     __table_args__ = {"schema": "forum"}
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    forum_id: Optional[uuid.UUID] = Field(nullable=False)
-    title: Optional[str] = Field(nullable=False, max_length=256)
-    author_id: Optional[uuid.UUID] = Field()
+    forum_id: Optional[uuid.UUID] = Field(default=None, nullable=True)
+    title: Optional[str] = Field(default=None, nullable=True, max_length=256)
+    author_id: Optional[uuid.UUID] = Field(default=None, nullable=True)
 
 
 class ThreadModel:
@@ -173,6 +173,48 @@ class ThreadModel:
                         "forum_id": thread.forum_id,
                         "title": thread.title,
                         "author_id": thread.author_id,
+                    },
+                ).first()
+                if row is None:
+                    raise NoResultFound
+                session.commit()
+                return Thread(
+                    id=row.id,
+                    forum_id=row.forum_id,
+                    title=row.title,
+                    author_id=row.author_id,
+                    created_at=row.created_at,
+                    updated_at=row.updated_at,
+                    is_locked=row.is_locked,
+                    deleted=row.deleted,
+                    deleted_at=row.deleted_at,
+                    likes=row.likes,
+                )
+            except Exception as e:
+                raise e
+
+    def update(self, thread_patch: ThreadPatch) -> Thread | None:
+        query = text(
+            """
+            UPDATE forum.threads
+            SET forum_id = COALESCE(:forum_id, forum_id),
+                title = COALESCE(:title, title),
+                author_id = COALESCE(:author_id, author_id)
+            WHERE id = :id
+            RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at, likes;
+            """
+        )
+
+        session = sessionmaker(bind=self.engine)()
+        with session:
+            try:
+                row = session.execute(
+                    query,
+                    {
+                        "id": thread_patch.id,
+                        "forum_id": thread_patch.forum_id,
+                        "title": thread_patch.title,
+                        "author_id": thread_patch.author_id,
                     },
                 ).first()
                 if row is None:
