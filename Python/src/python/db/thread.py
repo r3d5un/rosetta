@@ -234,3 +234,42 @@ class ThreadModel:
                 )
             except Exception as e:
                 raise e
+
+    def soft_delete(self, id: uuid.UUID) -> Thread | None:
+        query = text(
+            """
+            UPDATE forum.threads
+            SET deleted    = TRUE,
+                deleted_at = NOW(),
+                updated_at = NOW()
+            WHERE id = :id
+            RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at, likes;
+            """
+        )
+
+        session = sessionmaker(bind=self.engine)()
+        with session:
+            try:
+                row = session.execute(
+                    query,
+                    {
+                        "id": id,
+                    },
+                ).first()
+                if row is None:
+                    raise NoResultFound
+                session.commit()
+                return Thread(
+                    id=row.id,
+                    forum_id=row.forum_id,
+                    title=row.title,
+                    author_id=row.author_id,
+                    created_at=row.created_at,
+                    updated_at=row.updated_at,
+                    is_locked=row.is_locked,
+                    deleted=row.deleted,
+                    deleted_at=row.deleted_at,
+                    likes=row.likes,
+                )
+            except Exception as e:
+                raise e
