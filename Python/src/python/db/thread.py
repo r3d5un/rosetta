@@ -7,6 +7,8 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Field, SQLModel
 
+from src.python.db.filters import Filter, Metadata
+
 
 class Thread(SQLModel, table=True):
     __tablename__ = "threads"  # type: ignore
@@ -71,6 +73,85 @@ class ThreadModel:
                     deleted_at=row.deleted_at,
                     likes=row.likes,
                 )
+            except Exception as e:
+                raise e
+
+    def select_all(
+        self, filters: Filter
+    ) -> tuple[list[Thread] | None, Metadata | None] | None:
+        query = text(
+            f"""
+            SELECT id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at, likes
+            FROM forum.threads
+            WHERE (:id IS NULL OR id = :id)
+              AND (:forum_id IS NULL OR forum_id = :forum_id)
+              AND (:title IS NULL OR title = :title)
+              AND (:author_id IS NULL OR author_id = :author_id)
+              AND (:created_at_from IS NULL or created_at >= :created_at_from)
+              AND (:created_at_to IS NULL or created_at <= :created_at_to)
+              AND (:updated_at_from IS NULL or updated_at >= :updated_at_from)
+              AND (:updated_at_to IS NULL or updated_at <= :updated_at_to)
+              AND (:is_locked IS NULL or is_locked = :is_locked)
+              AND (:deleted IS NULL or deleted = :deleted)
+              AND (:deleted_at_from IS NULL or deleted_at >= :deleted_at_from)
+              AND (:deleted_at_to IS NULL or deleted_at <= :deleted_at_to)
+              AND id > :last_seen
+            {filters.create_order_by_clause()}
+            LIMIT :page_size;
+            """
+        )
+
+        session = sessionmaker(bind=self.engine)()
+        with session:
+            try:
+                rows = session.execute(
+                    query,
+                    {
+                        "page_size": filters.page_size,
+                        "id": filters.id,
+                        "author_id": filters.author_id,
+                        "title": filters.title,
+                        "forum_id": filters.forum_id,
+                        "name": filters.name,
+                        "username": filters.username,
+                        "email": filters.email,
+                        "created_at_from": filters.created_at_from,
+                        "created_at_to": filters.created_at_to,
+                        "updated_at_from": filters.updated_at_from,
+                        "updated_at_to": filters.updated_at_to,
+                        "deleted_at_from": filters.deleted_at_from,
+                        "deleted_at_to": filters.deleted_at_to,
+                        "deleted": filters.deleted,
+                        "last_seen": filters.last_seen,
+                        "is_locked": filters.is_locked,
+                    },
+                ).fetchall()
+                threads = [
+                    Thread(
+                        id=row.id,
+                        forum_id=row.forum_id,
+                        title=row.title,
+                        author_id=row.author_id,
+                        created_at=row.created_at,
+                        updated_at=row.updated_at,
+                        is_locked=row.is_locked,
+                        deleted=row.deleted,
+                        deleted_at=row.deleted_at,
+                        likes=row.likes,
+                    )
+                    for row in rows
+                ]
+                length = len(threads)
+                metadata = Metadata()
+                if length > 0:
+                    id = threads[length - 1].id
+                    if id is not None:
+                        metadata.last_seen = id
+                    metadata.next = True
+                metadata.response_length = length
+
+                return (threads, metadata)
+
             except Exception as e:
                 raise e
 
