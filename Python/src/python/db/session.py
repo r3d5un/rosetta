@@ -2,6 +2,7 @@ from sqlalchemy import Engine
 from sqlmodel import create_engine
 
 from python.db.forum import ForumModel
+from python.db.post import PostModel
 from python.db.thread import ThreadModel
 from python.db.user import UserModel
 
@@ -15,3 +16,4 @@ class Models:
         self.users = UserModel(engine)
         self.forums = ForumModel(engine)
         self.threads = ThreadModel(engine)
+        self.posts = PostModel(engine)
