@@ -255,3 +255,50 @@ class PostModel:
                 )
             except Exception as e:
                 raise e
+
+    def soft_delete(self, id: uuid.UUID) -> Post | None:
+        query = text(
+            """
+            UPDATE forum.posts
+            SET deleted    = TRUE,
+                deleted_at = NOW(),
+                updated_at = NOW()
+            WHERE id = :id
+            RETURNING id,
+                thread_id,
+                reply_to,
+                author_id,
+                content,
+                created_at,
+                updated_at,
+                likes,
+                deleted,
+                deleted_at;
+            """
+        )
+
+        session = sessionmaker(bind=self.engine)()
+        with session:
+            try:
+                row = session.execute(
+                    query,
+                    {
+                        "id": id,
+                    },
+                ).first()
+                if row is None:
+                    raise NoResultFound
+                session.commit()
+                return Post(
+                    id=row.id,
+                    thread_id=row.thread_id,
+                    reply_to=row.reply_to,
+                    author_id=row.author_id,
+                    content=row.content,
+                    created_at=row.created_at,
+                    updated_at=row.updated_at,
+                    deleted=row.deleted,
+                    deleted_at=row.deleted_at,
+                )
+            except Exception as e:
+                raise e
