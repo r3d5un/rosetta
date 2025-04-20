@@ -27,7 +27,7 @@ class Post(SQLModel, table=True):
 
 class PostPatch(SQLModel):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    thread_id: Optional[uuid.UUID] = Field(default=None, nullable=False)
+    thread_id: uuid.UUID = Field(nullable=False)
     content: Optional[str] = Field(default=None, nullable=False)
 
 
@@ -189,6 +189,54 @@ class PostModel:
                         "reply_to": post.reply_to,
                         "content": post.content,
                         "author_id": post.author_id,
+                    },
+                ).first()
+                if row is None:
+                    raise NoResultFound
+                session.commit()
+                return Post(
+                    id=row.id,
+                    thread_id=row.thread_id,
+                    reply_to=row.reply_to,
+                    author_id=row.author_id,
+                    content=row.content,
+                    created_at=row.created_at,
+                    updated_at=row.updated_at,
+                    deleted=row.deleted,
+                    deleted_at=row.deleted_at,
+                )
+            except Exception as e:
+                raise e
+
+    def update(self, patch: PostPatch) -> Post | None:
+        query = text(
+            """
+            UPDATE forum.posts
+            SET content = COALESCE(:content, content)
+            WHERE id = :id
+              AND thread_id = :thread_id
+            RETURNING id,
+                thread_id,
+                reply_to,
+                author_id,
+                content,
+                created_at,
+                updated_at,
+                likes,
+                deleted,
+                deleted_at;
+            """
+        )
+
+        session = sessionmaker(bind=self.engine)()
+        with session:
+            try:
+                row = session.execute(
+                    query,
+                    {
+                        "id": patch.id,
+                        "thread_id": patch.thread_id,
+                        "content": patch.content,
                     },
                 ).first()
                 if row is None:
