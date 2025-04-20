@@ -7,6 +7,8 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Field, SQLModel
 
+from src.python.db.filters import Filter, Metadata
+
 
 class Post(SQLModel, table=True):
     __tablename__ = "posts"  # type: ignore
@@ -74,6 +76,85 @@ class PostModel:
                     deleted=row.deleted,
                     deleted_at=row.deleted_at,
                 )
+            except Exception as e:
+                raise e
+
+    def select_all(
+        self, filters: Filter
+    ) -> tuple[list[Post] | None, Metadata | None] | None:
+        query = text(
+            f"""
+            SELECT id,
+                   thread_id,
+                   reply_to,
+                   author_id,
+                   content,
+                   created_at,
+                   updated_at,
+                   likes,
+                   deleted,
+                   deleted_at
+            FROM forum.posts
+            WHERE (:id IS NULL OR id = :id)
+              AND (:thread_id IS NULL OR thread_id = :thread_id)
+              AND (:author_id IS NULL OR author_id = :author_id)
+              AND (:created_at_from IS NULL or created_at >= :created_at_from)
+              AND (:created_at_to IS NULL or created_at <= :created_at_to)
+              AND (:updated_at_from IS NULL or updated_at >= :updated_at_from)
+              AND (:updated_at_to IS NULL or updated_at <= :updated_at_to)
+              AND (:deleted IS NULL or deleted = :deleted)
+              AND (:deleted_at_from IS NULL or deleted_at >= :deleted_at_from)
+              AND (:deleted_at_to IS NULL or deleted_at <= :deleted_at_to)
+              AND id > :last_seen
+            {filters.create_order_by_clause()}
+            LIMIT :page_size;
+            """
+        )
+        session = sessionmaker(bind=self.engine)()
+        with session:
+            try:
+                rows = session.execute(
+                    query,
+                    {
+                        "page_size": filters.page_size,
+                        "id": filters.id,
+                        "thread_id": filters.thread_id,
+                        "author_id": filters.author_id,
+                        "created_at_from": filters.created_at_from,
+                        "created_at_to": filters.created_at_to,
+                        "updated_at_from": filters.updated_at_from,
+                        "updated_at_to": filters.updated_at_to,
+                        "deleted_at_from": filters.deleted_at_from,
+                        "deleted_at_to": filters.deleted_at_to,
+                        "deleted": filters.deleted,
+                        "last_seen": filters.last_seen,
+                    },
+                ).fetchall()
+                forums = [
+                    Post(
+                        id=row.id,
+                        thread_id=row.thread_id,
+                        reply_to=row.reply_to,
+                        author_id=row.author_id,
+                        content=row.content,
+                        created_at=row.created_at,
+                        updated_at=row.updated_at,
+                        deleted=row.deleted,
+                        deleted_at=row.deleted_at,
+                    )
+                    for row in rows
+                ]
+                length = len(forums)
+                metadata = Metadata()
+                if length > 0:
+                    id = forums[length - 1].id
+                    if id is not None:
+                        metadata.last_seen = id
+                    metadata.next = True
+                metadata.response_length = length
+
+                return (forums, metadata)
+
             except Exception as e:
                 raise e
 
