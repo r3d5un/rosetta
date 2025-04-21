@@ -1,6 +1,7 @@
 from python.db.filters import Filter, Metadata
 from python.db.forum import Forum
 from python.db.post import Post, PostPatch
+from python.db.postvote import PostVote
 from python.db.session import Models
 from python.db.thread import Thread
 from python.db.user import User
@@ -441,21 +442,21 @@ def test_post_votes():
     if post.id is None:
         raise ValueError("inserted post ID is None")
 
-    # try:
-    #     vote = models.post_votes.vote(
-    #         PostVotek(thread_id=thread.id, user_id=user.id, vote=1)
-    #     )
-    #     if vote is None:
-    #         raise Exception("vote is None")
-    # except Exception as e:
-    #     raise Exception(f"error occurred when getting thread vote sum: {e}")
+    try:
+        vote = models.post_votes.vote(
+            PostVote(post_id=post.id, user_id=user.id, vote=1)
+        )
+        if vote is None:
+            raise Exception("vote is None")
+    except Exception as e:
+        raise Exception(f"error occurred when voting: {e}")
 
     try:
-        vote_sum = models.thread_votes.select_count(
+        vote_sum = models.post_votes.select_count(
             filters=Filter(post_id=post.id, user_id=user.id)
         )
     except Exception as e:
         raise Exception(f"error occurred when getting thread vote sum: {e}")
     if vote_sum is None:
         raise Exception("vote sum is None")
-    assert vote_sum >= 0
+    assert vote_sum >= 1

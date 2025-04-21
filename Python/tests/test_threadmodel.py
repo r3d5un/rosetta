@@ -352,7 +352,7 @@ def test_thread_votes():
         if vote is None:
             raise Exception("vote is None")
     except Exception as e:
-        raise Exception(f"error occurred when getting thread vote sum: {e}")
+        raise Exception(f"error occurred when voting: {e}")
 
     try:
         vote_sum = models.thread_votes.select_count(
