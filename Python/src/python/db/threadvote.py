@@ -46,3 +46,42 @@ class ThreadVoteModel:
                 return int(row.total_votes)
             except Exception as e:
                 raise e
+
+    def vote(self, vote: ThreadVote) -> ThreadVote | None:
+        query = text(
+            """
+            WITH input_data AS (SELECT :thread_id AS thread_id,
+                                       :user_id   AS user_id,
+                                       :vote      AS vote),
+                 delete_if_zero AS (
+                     DELETE FROM forum.thread_votes
+                         WHERE thread_id = (SELECT thread_id FROM input_data)
+                             AND user_id = (SELECT user_id FROM input_data)
+                             AND (SELECT vote FROM input_data) = 0)
+            INSERT
+            INTO forum.thread_votes (thread_id, user_id, vote)
+            SELECT thread_id, user_id, vote
+            FROM input_data
+            WHERE vote != 0
+            ON CONFLICT (thread_id, user_id) DO UPDATE
+                SET vote = EXCLUDED.vote;
+            """
+        )
+
+        session = sessionmaker(bind=self.engine)()
+        with session:
+            try:
+                row = session.execute(
+                    query,
+                    {
+                        "thread_id": vote.thread_id,
+                        "user_id": vote.user_id,
+                        "vote": vote.vote,
+                    },
+                )
+                if row is None:
+                    raise NoResultFound
+                session.commit()
+                return vote
+            except Exception as e:
+                raise e

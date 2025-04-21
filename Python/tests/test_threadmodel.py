@@ -2,6 +2,7 @@ from python.db.filters import Filter, Metadata
 from python.db.forum import Forum
 from python.db.session import Models
 from python.db.thread import Thread, ThreadPatch
+from python.db.threadvote import ThreadVote
 from python.db.user import User
 from tests.conftest import get_testcontainer_db_engine
 
@@ -345,6 +346,15 @@ def test_thread_votes():
         raise ValueError("inserted thread ID is None")
 
     try:
+        vote = models.thread_votes.vote(
+            ThreadVote(thread_id=thread.id, user_id=user.id, vote=1)
+        )
+        if vote is None:
+            raise Exception("vote is None")
+    except Exception as e:
+        raise Exception(f"error occurred when getting thread vote sum: {e}")
+
+    try:
         vote_sum = models.thread_votes.select_count(
             filters=Filter(thread_id=thread.id, user_id=user.id)
         )
@@ -352,4 +362,4 @@ def test_thread_votes():
         raise Exception(f"error occurred when getting thread vote sum: {e}")
     if vote_sum is None:
         raise Exception("vote sum is None")
-    assert vote_sum >= 0
+    assert vote_sum >= 1
