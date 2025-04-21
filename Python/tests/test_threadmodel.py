@@ -308,3 +308,48 @@ def test_delete():
         raise Exception(f"error upon inserting thread: {e}")
     if thread is None:
         raise ValueError("no thread returned upon insertion")
+
+
+def test_thread_votes():
+    models = Models(engine=get_testcontainer_db_engine())
+    user = User(
+        name="Saburo Arasaka", username="s.arasaka", email="s.arasaka@arasaka.com"
+    )
+    try:
+        user = models.users.insert(user)
+    except Exception as e:
+        raise Exception(f"error upon inserting user: {e}")
+    if user is None:
+        raise ValueError("no user returnd upon insertion")
+    if user.id is None:
+        raise ValueError("inserted user ID is None")
+
+    forum = Forum(owner_id=user.id, name="Crushing Militech", description="")
+    try:
+        forum = models.forums.insert(forum)
+    except Exception as e:
+        raise Exception(f"error upon inserting forum: {e}")
+    if forum is None:
+        raise ValueError("no forum returnd upon insertion")
+    if forum.id is None:
+        raise ValueError("inserted forum ID is None")
+
+    thread = Thread(forum_id=forum.id, author_id=user.id, title="Johnny Boy")
+    try:
+        thread = models.threads.insert(thread)
+    except Exception as e:
+        raise Exception(f"error upon inserting thread: {e}")
+    if thread is None:
+        raise ValueError("no thread returned upon insertion")
+    if thread.id is None:
+        raise ValueError("inserted thread ID is None")
+
+    try:
+        vote_sum = models.thread_votes.select_count(
+            filters=Filter(thread_id=thread.id, user_id=user.id)
+        )
+    except Exception as e:
+        raise Exception(f"error occurred when getting thread vote sum: {e}")
+    if vote_sum is None:
+        raise Exception("vote sum is None")
+    assert vote_sum >= 0
