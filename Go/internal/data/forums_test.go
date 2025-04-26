@@ -2,6 +2,7 @@ package data_test
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -65,7 +66,7 @@ func TestForumModel(t *testing.T) {
 		newName := "Surviving Militech"
 		updatedForum, err := models.Forums.Update(ctx, data.ForumPatch{
 			ID:   newForum.ID,
-			Name: &newName,
+			Name: sql.NullString{Valid: true, String: newName},
 		})
 		assert.NoError(t, err)
 		assert.NotEqual(t, newForum, *updatedForum)
