@@ -38,6 +38,32 @@ type Forum struct {
 	DeletedAt *time.Time `json:"deletedAt,omitzero"`
 }
 
+func newForumFromRow(row data.Forum) *Forum {
+	return &Forum{
+		ID:          row.ID,
+		OwnerID:     row.OwnerID,
+		Name:        row.Name,
+		Description: database.NullStringToPtr(row.Description),
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
+		Deleted:     row.Deleted,
+		DeletedAt:   database.NullTimeToPtr(row.DeletedAt),
+	}
+}
+
+func (f *Forum) Row() data.Forum {
+	return data.Forum{
+		ID:          f.ID,
+		OwnerID:     f.OwnerID,
+		Name:        f.Name,
+		Description: database.NewNullString(f.Description),
+		CreatedAt:   f.CreatedAt,
+		UpdatedAt:   f.UpdatedAt,
+		Deleted:     f.Deleted,
+		DeletedAt:   database.NewNullTime(f.DeletedAt),
+	}
+}
+
 type ForumPatch struct {
 	// ID is the unique identifier of a forum.
 	//
@@ -52,7 +78,7 @@ type ForumPatch struct {
 	Description *string `json:"description,omitzero"`
 }
 
-func (f *ForumPatch) DB() data.ForumPatch {
+func (f *ForumPatch) Row() data.ForumPatch {
 	return data.ForumPatch{
 		ID:          f.ID,
 		OwnerID:     database.NewNullUUID(f.OwnerID),
