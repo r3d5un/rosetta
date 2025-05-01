@@ -103,6 +103,7 @@ func (r *ForumRepository) Read(ctx context.Context, id uuid.UUID, include bool) 
 	logger := logging.LoggerFromContext(ctx).
 		With(slog.Group("parameters", slog.String("id", id.String()), slog.Bool("include", include)))
 
+	logger.LogAttrs(ctx, slog.LevelInfo, "retrieving forum")
 	row, err := r.models.Forums.Select(ctx, id)
 	if err != nil {
 		logger.LogAttrs(
@@ -110,6 +111,7 @@ func (r *ForumRepository) Read(ctx context.Context, id uuid.UUID, include bool) 
 		)
 		return nil, err
 	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "forum retrieved")
 
 	return newForumFromRow(*row), nil
 }
@@ -122,6 +124,7 @@ func (r *ForumRepository) List(
 	logger := logging.LoggerFromContext(ctx).
 		With(slog.Group("parameters", slog.Any("filters", filter), slog.Bool("include", include)))
 
+	logger.LogAttrs(ctx, slog.LevelInfo, "retrieving forums")
 	rows, metadata, err := r.models.Forums.SelectAll(ctx, filter)
 	if err != nil {
 		logger.LogAttrs(
@@ -133,6 +136,7 @@ func (r *ForumRepository) List(
 		slog.Any("filters", filter),
 		slog.Any("metadata", metadata)),
 		slog.Bool("include", include))
+	logger.LogAttrs(ctx, slog.LevelInfo, "forums retrieved")
 
 	forums := make([]*Forum, len(rows))
 	for i, row := range rows {
