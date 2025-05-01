@@ -92,6 +92,7 @@ func (f *ForumPatch) Row() data.ForumPatch {
 
 type ForumReader interface {
 	Read(context.Context, uuid.UUID, bool) (*Forum, error)
+	List(context.Context, data.Filters, bool) ([]*Forum, *data.Metadata, error)
 }
 
 type ForumRepository struct {
@@ -111,4 +112,32 @@ func (r *ForumRepository) Read(ctx context.Context, id uuid.UUID, include bool) 
 	}
 
 	return newForumFromRow(*row), nil
+}
+
+func (r *ForumRepository) List(
+	ctx context.Context,
+	filter data.Filters,
+	include bool,
+) ([]*Forum, *data.Metadata, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.Any("filters", filter), slog.Bool("include", include)))
+
+	rows, metadata, err := r.models.Forums.SelectAll(ctx, filter)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to select forum", slog.String("error", err.Error()),
+		)
+	}
+	logger = logging.LoggerFromContext(ctx).With(slog.Group(
+		"parameters",
+		slog.Any("filters", filter),
+		slog.Any("metadata", metadata)),
+		slog.Bool("include", include))
+
+	forums := make([]*Forum, len(rows))
+	for i, row := range rows {
+		forums[i] = newForumFromRow(*row)
+	}
+
+	return forums, metadata, nil
 }
