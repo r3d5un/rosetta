@@ -1,11 +1,14 @@
 package repo
 
 import (
+	"context"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/r3d5un/rosetta/Go/internal/data"
 	"github.com/r3d5un/rosetta/Go/internal/database"
+	"github.com/r3d5un/rosetta/Go/internal/logging"
 )
 
 type Forum struct {
@@ -85,4 +88,27 @@ func (f *ForumPatch) Row() data.ForumPatch {
 		Name:        database.NewNullString(f.Name),
 		Description: database.NewNullString(f.Description),
 	}
+}
+
+type ForumReader interface {
+	Read(context.Context, uuid.UUID, bool) (*Forum, error)
+}
+
+type ForumRepository struct {
+	models *data.Models
+}
+
+func (r *ForumRepository) Read(ctx context.Context, id uuid.UUID, include bool) (*Forum, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.String("id", id.String()), slog.Bool("include", include)))
+
+	row, err := r.models.Forums.Select(ctx, id)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to select forum", slog.String("error", err.Error()),
+		)
+		return nil, err
+	}
+
+	return newForumFromRow(*row), nil
 }
