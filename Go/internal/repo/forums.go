@@ -95,6 +95,10 @@ type ForumReader interface {
 	List(context.Context, data.Filters, bool) ([]*Forum, *data.Metadata, error)
 }
 
+type ForumWriter interface {
+	Create(context.Context, Forum) (*Forum, error)
+}
+
 type ForumRepository struct {
 	models *data.Models
 }
@@ -144,4 +148,20 @@ func (r *ForumRepository) List(
 	}
 
 	return forums, metadata, nil
+}
+
+func (r *ForumRepository) Create(ctx context.Context, forum Forum) (*Forum, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.Any("forum", forum)))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "creating forum")
+	row, err := r.models.Forums.Insert(ctx, forum.Row())
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to create forum", slog.String("error", err.Error()),
+		)
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "forum created")
+
+	return newForumFromRow(*row), nil
 }
