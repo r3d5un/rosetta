@@ -172,7 +172,6 @@ func (r *ForumRepository) Delete(ctx context.Context, id uuid.UUID) (*Forum, err
 
 	logger.LogAttrs(ctx, slog.LevelInfo, "deleting forum")
 	row, err := r.models.Forums.SoftDelete(ctx, id)
-
 	if err != nil {
 		logger.LogAttrs(
 			ctx, slog.LevelError, "unable to delete forum", slog.String("error", err.Error()),
@@ -183,13 +182,28 @@ func (r *ForumRepository) Delete(ctx context.Context, id uuid.UUID) (*Forum, err
 	return newForumFromRow(*row), nil
 }
 
+func (r *ForumRepository) Restore(ctx context.Context, id uuid.UUID) (*Forum, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.String("id", id.String())))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "restoring forum")
+	row, err := r.models.Forums.Restore(ctx, id)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to restore forum", slog.String("error", err.Error()),
+		)
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "forum restored")
+
+	return newForumFromRow(*row), nil
+}
+
 func (r *ForumRepository) PermanentlyDelete(ctx context.Context, id uuid.UUID) (*Forum, error) {
 	logger := logging.LoggerFromContext(ctx).
 		With(slog.Group("parameters", slog.String("id", id.String())))
 
 	logger.LogAttrs(ctx, slog.LevelInfo, "deleting forum")
 	row, err := r.models.Forums.Delete(ctx, id)
-
 	if err != nil {
 		logger.LogAttrs(
 			ctx, slog.LevelError, "unable to delete forum", slog.String("error", err.Error()),
