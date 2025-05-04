@@ -103,6 +103,9 @@ type UserReader interface {
 
 type UserWriter interface {
 	Create(context.Context, User) (*User, error)
+	Delete(context.Context, uuid.UUID) (*Forum, error)
+	Restore(context.Context, uuid.UUID) (*Forum, error)
+	PermanentlyDelete(context.Context, uuid.UUID) (*Forum, error)
 }
 
 type UserRepository struct {
