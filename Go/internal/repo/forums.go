@@ -103,6 +103,12 @@ type ForumRepository struct {
 	models *data.Models
 }
 
+func NewForumRepository(models *data.Models) ForumRepository {
+	return ForumRepository{
+		models: models,
+	}
+}
+
 func (r *ForumRepository) Read(ctx context.Context, id uuid.UUID, include bool) (*Forum, error) {
 	logger := logging.LoggerFromContext(ctx).
 		With(slog.Group("parameters", slog.String("id", id.String()), slog.Bool("include", include)))
