@@ -97,6 +97,9 @@ type ForumReader interface {
 
 type ForumWriter interface {
 	Create(context.Context, Forum) (*Forum, error)
+	Delete(context.Context, uuid.UUID) (*Forum, error)
+	Restore(context.Context, uuid.UUID) (*Forum, error)
+	PermanentlyDelete(context.Context, uuid.UUID) (*Forum, error)
 }
 
 type ForumRepository struct {
