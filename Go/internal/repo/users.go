@@ -164,3 +164,19 @@ func (r *UserRepository) List(
 
 	return users, metadata, nil
 }
+
+func (r *UserRepository) Create(ctx context.Context, user User) (*User, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.Any("user", user)))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "creating user")
+	row, err := r.models.Users.Insert(ctx, user.Row())
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to create user", slog.String("error", err.Error()),
+		)
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "user created")
+
+	return newUserFromRow(*row), nil
+}
