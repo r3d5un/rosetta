@@ -196,3 +196,19 @@ func (r *UserRepository) Delete(ctx context.Context, id uuid.UUID) (*User, error
 
 	return newUserFromRow(*row), nil
 }
+
+func (r *UserRepository) Restore(ctx context.Context, id uuid.UUID) (*User, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.String("id", id.String())))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "restoring user")
+	row, err := r.models.Users.Restore(ctx, id)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to restore user", slog.String("error", err.Error()),
+		)
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "user restored")
+
+	return newUserFromRow(*row), nil
+}
