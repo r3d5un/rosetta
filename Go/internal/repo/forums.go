@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -39,6 +40,8 @@ type Forum struct {
 	//
 	// This field is ignored when updating or creating new forums.
 	DeletedAt *time.Time `json:"deletedAt,omitzero"`
+	// Owner is the user which owns the forum.
+	Owner *User `json:"owner,omitzero"`
 }
 
 func newForumFromRow(row data.Forum) *Forum {
@@ -103,12 +106,14 @@ type ForumWriter interface {
 }
 
 type ForumRepository struct {
-	models *data.Models
+	models     *data.Models
+	userReader UserReader
 }
 
-func NewForumRepository(models *data.Models) ForumRepository {
+func NewForumRepository(models *data.Models, userReader UserReader) ForumRepository {
 	return ForumRepository{
-		models: models,
+		models:     models,
+		userReader: userReader,
 	}
 }
 
@@ -124,9 +129,35 @@ func (r *ForumRepository) Read(ctx context.Context, id uuid.UUID, include bool) 
 		)
 		return nil, err
 	}
+	forum := newForumFromRow(*row)
 	logger.LogAttrs(ctx, slog.LevelInfo, "forum retrieved")
 
-	return newForumFromRow(*row), nil
+	if !include {
+		return forum, nil
+	}
+
+	var wg sync.WaitGroup
+	errCh := make(chan error, 1)
+	var forumMu sync.Mutex
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		owner, err := r.userReader.Read(ctx, forum.OwnerID, false)
+		if err != nil {
+			errCh <- err
+		}
+
+		forumMu.Lock()
+		forum.Owner = owner
+		forumMu.Unlock()
+	}()
+
+	close(errCh)
+
+	wg.Wait()
+
+	return forum, nil
 }
 
 func (r *ForumRepository) List(
@@ -152,8 +183,29 @@ func (r *ForumRepository) List(
 	logger.LogAttrs(ctx, slog.LevelInfo, "forums retrieved")
 
 	forums := make([]*Forum, len(rows))
+	var wg sync.WaitGroup
+	errCh := make(chan error, len(rows)*1)
+	var forumsMu sync.Mutex
+
 	for i, row := range rows {
 		forums[i] = newForumFromRow(*row)
+
+		if !include {
+			continue
+		}
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			owner, err := r.userReader.Read(ctx, forums[i].OwnerID, false)
+			if err != nil {
+				errCh <- err
+			}
+
+			forumsMu.Lock()
+			forums[i].Owner = owner
+			forumsMu.Unlock()
+		}()
 	}
 
 	return forums, metadata, nil
