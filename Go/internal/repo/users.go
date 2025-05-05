@@ -212,3 +212,19 @@ func (r *UserRepository) Restore(ctx context.Context, id uuid.UUID) (*User, erro
 
 	return newUserFromRow(*row), nil
 }
+
+func (r *UserRepository) PermanentlyDelete(ctx context.Context, id uuid.UUID) (*User, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.String("id", id.String())))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "deleting user")
+	row, err := r.models.Users.Delete(ctx, id)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to delete user", slog.String("error", err.Error()),
+		)
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "user deleted")
+
+	return newUserFromRow(*row), nil
+}
