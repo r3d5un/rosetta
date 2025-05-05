@@ -130,3 +130,33 @@ func (r *UserRepository) Read(ctx context.Context, id uuid.UUID, include bool) (
 
 	return newUserFromRow(*row), nil
 }
+
+func (r *UserRepository) List(
+	ctx context.Context,
+	filter data.Filters,
+	include bool,
+) ([]*User, *data.Metadata, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.Any("filters", filter), slog.Bool("include", include)))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "retrieving users")
+	rows, metadata, err := r.models.Users.SelectAll(ctx, filter)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to select user", slog.String("error", err.Error()),
+		)
+	}
+	logger = logging.LoggerFromContext(ctx).With(slog.Group(
+		"parameters",
+		slog.Any("filters", filter),
+		slog.Any("metadata", metadata)),
+		slog.Bool("include", include))
+	logger.LogAttrs(ctx, slog.LevelInfo, "users retrieved")
+
+	users := make([]*User, len(rows))
+	for i, row := range rows {
+		users[i] = newUserFromRow(*row)
+	}
+
+	return users, metadata, nil
+}
