@@ -9,7 +9,8 @@ type Repository struct {
 }
 
 func NewRepository(models *data.Models) Repository {
-	forumRepo := NewForumRepository(models)
+	userRepo := NewUserRepository(models)
+	forumRepo := NewForumRepository(models, &userRepo)
 
 	return Repository{
 		models:      models,

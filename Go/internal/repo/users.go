@@ -114,6 +114,10 @@ type UserRepository struct {
 	models *data.Models
 }
 
+func NewUserRepository(models *data.Models) UserRepository {
+	return UserRepository{models: models}
+}
+
 func (r *UserRepository) Read(ctx context.Context, id uuid.UUID, include bool) (*User, error) {
 	logger := logging.LoggerFromContext(ctx).
 		With(slog.Group("parameters", slog.String("id", id.String()), slog.Bool("include", include)))
