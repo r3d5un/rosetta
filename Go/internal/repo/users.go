@@ -2,11 +2,13 @@ package repo
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/r3d5un/rosetta/Go/internal/data"
 	"github.com/r3d5un/rosetta/Go/internal/database"
+	"github.com/r3d5un/rosetta/Go/internal/logging"
 )
 
 type User struct {
@@ -103,11 +105,28 @@ type UserReader interface {
 
 type UserWriter interface {
 	Create(context.Context, User) (*User, error)
-	Delete(context.Context, uuid.UUID) (*Forum, error)
-	Restore(context.Context, uuid.UUID) (*Forum, error)
-	PermanentlyDelete(context.Context, uuid.UUID) (*Forum, error)
+	Delete(context.Context, uuid.UUID) (*User, error)
+	Restore(context.Context, uuid.UUID) (*User, error)
+	PermanentlyDelete(context.Context, uuid.UUID) (*User, error)
 }
 
 type UserRepository struct {
 	models *data.Models
+}
+
+func (r *UserRepository) Read(ctx context.Context, id uuid.UUID, include bool) (*User, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.String("id", id.String()), slog.Bool("include", include)))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "retrieving user")
+	row, err := r.models.Users.Select(ctx, id)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to select user", slog.String("error", err.Error()),
+		)
+		return nil, err
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "user retrieved")
+
+	return newUserFromRow(*row), nil
 }
