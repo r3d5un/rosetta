@@ -54,11 +54,11 @@ type ThreadPatch struct {
 	// setting the value upon insertion.
 	ID uuid.UUID `json:"id"`
 	// ForumID is the parent forum this thread belongs to.
-	ForumID *uuid.UUID `json:"forumId"`
+	ForumID uuid.NullUUID `json:"forumId"`
 	// Title is the subject the thread is about.
-	Title *string `json:"title"`
+	Title sql.NullString `json:"title"`
 	// AuthorID is the unique identifier of the author of the thread.
-	AuthorID *uuid.UUID `json:"authorId"`
+	AuthorID uuid.NullUUID `json:"authorId"`
 }
 
 type ThreadModel struct {

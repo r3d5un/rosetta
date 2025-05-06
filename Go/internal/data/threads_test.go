@@ -2,6 +2,7 @@ package data_test
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -72,7 +73,7 @@ func TestThreadModel(t *testing.T) {
 		newTitle := "Neurochipped Johnny Boy"
 		updatedThread, err := models.Threads.Update(ctx, data.ThreadPatch{
 			ID:    newThread.ID,
-			Title: &newTitle,
+			Title: sql.NullString{Valid: true, String: newTitle},
 		})
 		assert.NoError(t, err)
 		assert.NotEqual(t, newThread, *updatedThread)
