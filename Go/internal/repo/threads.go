@@ -1,11 +1,15 @@
 package repo
 
 import (
+	"context"
+	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/r3d5un/rosetta/Go/internal/data"
 	"github.com/r3d5un/rosetta/Go/internal/database"
+	"github.com/r3d5un/rosetta/Go/internal/logging"
 )
 
 type Thread struct {
@@ -98,4 +102,90 @@ func (f *ThreadPatch) Row() data.ThreadPatch {
 		Title:    database.NewNullString(f.Title),
 		AuthorID: database.NewNullUUID(f.AuthorID),
 	}
+}
+
+type ThreadReader interface {
+	Read(context.Context, uuid.UUID, bool) (*Thread, error)
+	List(context.Context, data.Filters, bool) ([]*Thread, *data.Metadata, error)
+}
+
+type ThreadWriter interface {
+	Create(context.Context, Thread) (*Thread, error)
+	Delete(context.Context, uuid.UUID) (*Thread, error)
+	Restore(context.Context, uuid.UUID) (*Thread, error)
+	PermanentlyDelete(context.Context, uuid.UUID) (*Thread, error)
+}
+
+type ThreadRepository struct {
+	models      *data.Models
+	forumReader ForumReader
+	userReader  UserReader
+}
+
+func NewThreadRepository(
+	models *data.Models,
+	forumReader ForumReader,
+	userReader UserReader,
+) ThreadRepository {
+	return ThreadRepository{
+		models:      models,
+		forumReader: forumReader,
+		userReader:  userReader,
+	}
+}
+
+func (r *ThreadRepository) Read(ctx context.Context, id uuid.UUID, include bool) (*Thread, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.String("id", id.String()), slog.Bool("include", include)))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "retrieving user")
+	row, err := r.models.Threads.Select(ctx, id)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to select user", slog.String("error", err.Error()),
+		)
+		return nil, err
+	}
+	thread := newThreadFromRow(*row)
+	logger.LogAttrs(ctx, slog.LevelInfo, "user retrieved")
+
+	if !include {
+		return thread, nil
+	}
+
+	var wg sync.WaitGroup
+	errCh := make(chan error, 2)
+	var forumMu sync.Mutex
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		author, err := r.userReader.Read(ctx, thread.AuthorID, false)
+		if err != nil {
+			errCh <- err
+		}
+
+		forumMu.Lock()
+		thread.Author = *author
+		forumMu.Unlock()
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		forum, err := r.forumReader.Read(ctx, thread.ForumID, true)
+		if err != nil {
+			errCh <- err
+		}
+
+		forumMu.Lock()
+		thread.Forum = *forum
+		forumMu.Unlock()
+	}()
+
+	close(errCh)
+
+	wg.Wait()
+
+	return thread, nil
 }
