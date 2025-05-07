@@ -301,3 +301,19 @@ func (r *ThreadRepository) List(
 
 	return threads, metadata, nil
 }
+
+func (r *ThreadRepository) Create(ctx context.Context, thread Thread) (*Thread, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.Any("thread", thread)))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "creating thread")
+	row, err := r.models.Threads.Insert(ctx, thread.Row())
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to create thread", slog.String("error", err.Error()),
+		)
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "thread created")
+
+	return newThreadFromRow(*row), nil
+}
