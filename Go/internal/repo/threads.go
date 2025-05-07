@@ -349,3 +349,19 @@ func (r *ThreadRepository) Restore(ctx context.Context, id uuid.UUID) (*Thread, 
 
 	return newThreadFromRow(*row), nil
 }
+
+func (r *ThreadRepository) PermanentlyDelete(ctx context.Context, id uuid.UUID) (*Thread, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.String("id", id.String())))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "deleting thread")
+	row, err := r.models.Threads.Delete(ctx, id)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to delete thread", slog.String("error", err.Error()),
+		)
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "thread deleted")
+
+	return newThreadFromRow(*row), nil
+}
