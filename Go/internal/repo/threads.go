@@ -333,3 +333,19 @@ func (r *ThreadRepository) Delete(ctx context.Context, id uuid.UUID) (*Thread, e
 
 	return newThreadFromRow(*row), nil
 }
+
+func (r *ThreadRepository) Restore(ctx context.Context, id uuid.UUID) (*Thread, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.String("id", id.String())))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "restoring thread")
+	row, err := r.models.Threads.Restore(ctx, id)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to restore thread", slog.String("error", err.Error()),
+		)
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "thread restored")
+
+	return newThreadFromRow(*row), nil
+}
