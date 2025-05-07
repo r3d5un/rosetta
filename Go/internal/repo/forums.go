@@ -146,6 +146,7 @@ func (r *ForumRepository) Read(ctx context.Context, id uuid.UUID, include bool) 
 		owner, err := r.userReader.Read(ctx, forum.OwnerID, false)
 		if err != nil {
 			errCh <- err
+			return
 		}
 
 		forumMu.Lock()
@@ -200,12 +201,22 @@ func (r *ForumRepository) List(
 			owner, err := r.userReader.Read(ctx, forums[i].OwnerID, false)
 			if err != nil {
 				errCh <- err
+				return
 			}
 
 			forumsMu.Lock()
 			forums[i].Owner = owner
 			forumsMu.Unlock()
 		}()
+	}
+
+	wg.Wait()
+	close(errCh)
+
+	for err := range errCh {
+		if err != nil {
+			logger.Error("unable to include all data", slog.String("error", err.Error()))
+		}
 	}
 
 	return forums, metadata, nil
