@@ -47,9 +47,11 @@ type Thread struct {
 	// Likes is the sum of votes the thread has received.
 	Likes int64 `json:"likes"`
 	// Forum that the thread belongs to.
-	Forum Forum `json:"forum,omitzero"`
+	Forum *Forum `json:"forum,omitzero"`
 	// Author of the thread.
-	Author User `json:"author,omitzero"`
+	Author *User `json:"author,omitzero"`
+	// Votes is the sum of votes the thread has received
+	Votes *int `json:"votes,omitzero"`
 }
 
 func newThreadFromRow(row data.Thread) *Thread {
@@ -154,8 +156,8 @@ func (r *ThreadRepository) Read(ctx context.Context, id uuid.UUID, include bool)
 	}
 
 	var wg sync.WaitGroup
-	errCh := make(chan error, 2)
-	var forumMu sync.Mutex
+	errCh := make(chan error, 3)
+	var threadMu sync.Mutex
 
 	wg.Add(1)
 	go func() {
@@ -163,11 +165,12 @@ func (r *ThreadRepository) Read(ctx context.Context, id uuid.UUID, include bool)
 		author, err := r.userReader.Read(ctx, thread.AuthorID, false)
 		if err != nil {
 			errCh <- err
+			return
 		}
 
-		forumMu.Lock()
-		thread.Author = *author
-		forumMu.Unlock()
+		threadMu.Lock()
+		thread.Author = author
+		threadMu.Unlock()
 	}()
 
 	wg.Add(1)
@@ -176,16 +179,125 @@ func (r *ThreadRepository) Read(ctx context.Context, id uuid.UUID, include bool)
 		forum, err := r.forumReader.Read(ctx, thread.ForumID, true)
 		if err != nil {
 			errCh <- err
+			return
 		}
 
-		forumMu.Lock()
-		thread.Forum = *forum
-		forumMu.Unlock()
+		threadMu.Lock()
+		thread.Forum = forum
+		threadMu.Unlock()
 	}()
 
-	close(errCh)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		votes, err := r.models.ThreadVotes.SelectSum(
+			ctx,
+			data.Filters{ThreadID: &thread.ID},
+		)
+		if err != nil {
+			errCh <- err
+			return
+		}
+
+		threadMu.Lock()
+		thread.Votes = votes
+		threadMu.Unlock()
+	}()
 
 	wg.Wait()
+	close(errCh)
 
 	return thread, nil
+}
+
+func (r *ThreadRepository) List(
+	ctx context.Context,
+	filter data.Filters,
+	include bool,
+) ([]*Thread, *data.Metadata, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.Any("filters", filter), slog.Bool("include", include)))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "retrieving threads")
+	rows, metadata, err := r.models.Threads.SelectAll(ctx, filter)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to select thread", slog.String("error", err.Error()),
+		)
+	}
+	logger = logging.LoggerFromContext(ctx).With(slog.Group(
+		"parameters",
+		slog.Any("filters", filter),
+		slog.Any("metadata", metadata)),
+		slog.Bool("include", include))
+	logger.LogAttrs(ctx, slog.LevelInfo, "threads retrieved")
+
+	threads := make([]*Thread, len(rows))
+	var wg sync.WaitGroup
+	errCh := make(chan error, len(rows)*3)
+	var threadsMu sync.Mutex
+
+	for i, row := range rows {
+		threads[i] = newThreadFromRow(*row)
+
+		if !include {
+			continue
+		}
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			author, err := r.userReader.Read(ctx, threads[i].AuthorID, false)
+			if err != nil {
+				errCh <- err
+				return
+			}
+
+			threadsMu.Lock()
+			threads[i].Author = author
+			threadsMu.Unlock()
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			forum, err := r.forumReader.Read(ctx, threads[i].ForumID, true)
+			if err != nil {
+				errCh <- err
+				return
+			}
+
+			threadsMu.Lock()
+			threads[i].Forum = forum
+			threadsMu.Unlock()
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			votes, err := r.models.ThreadVotes.SelectSum(
+				ctx,
+				data.Filters{ThreadID: &threads[i].ID},
+			)
+			if err != nil {
+				errCh <- err
+				return
+			}
+
+			threadsMu.Lock()
+			threads[i].Votes = votes
+			threadsMu.Unlock()
+		}()
+	}
+
+	wg.Wait()
+	close(errCh)
+
+	for err := range errCh {
+		if err != nil {
+			logger.Error("unable to include all data", slog.String("error", err.Error()))
+		}
+	}
+
+	return threads, metadata, nil
 }
