@@ -25,7 +25,7 @@ type ThreadVoteModel struct {
 	Timeout *time.Duration
 }
 
-func (m *ThreadVoteModel) SelectCount(ctx context.Context, filters Filters) (*int, error) {
+func (m *ThreadVoteModel) SelectSum(ctx context.Context, filters Filters) (*int, error) {
 	const query string = `
 SELECT CASE
            WHEN SUM(vote) IS NULL THEN 0

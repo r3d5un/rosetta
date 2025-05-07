@@ -46,8 +46,8 @@ func TestThreadVoteModel(t *testing.T) {
 		assert.NotEqual(t, newVote, vote)
 	})
 
-	t.Run("SelectCount", func(t *testing.T) {
-		count, err := models.ThreadVotes.SelectCount(ctx, data.Filters{
+	t.Run("SelectSum", func(t *testing.T) {
+		count, err := models.ThreadVotes.SelectSum(ctx, data.Filters{
 			ThreadID: &insertedThread.ID,
 			UserID:   &user.ID,
 		})
