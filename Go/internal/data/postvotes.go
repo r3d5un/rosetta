@@ -25,7 +25,7 @@ type PostVoteModel struct {
 	Timeout *time.Duration
 }
 
-func (m *PostVoteModel) SelectCount(ctx context.Context, filters Filters) (*int, error) {
+func (m *PostVoteModel) SelectSum(ctx context.Context, filters Filters) (*int, error) {
 	const query string = `
 SELECT CASE
            WHEN SUM(vote) IS NULL THEN 0

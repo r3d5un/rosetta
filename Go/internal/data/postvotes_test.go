@@ -58,8 +58,8 @@ func TestPostVoteModel(t *testing.T) {
 		assert.NotEqual(t, newVote, vote)
 	})
 
-	t.Run("SelectCount", func(t *testing.T) {
-		count, err := models.PostVotes.SelectCount(ctx, data.Filters{
+	t.Run("SelectSum", func(t *testing.T) {
+		count, err := models.PostVotes.SelectSum(ctx, data.Filters{
 			PostID: &insertedPost.ID,
 			UserID: &user.ID,
 		})
