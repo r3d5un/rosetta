@@ -2,6 +2,7 @@ package data_test
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -66,7 +67,7 @@ func TestPostModel(t *testing.T) {
 		updatedPost, err := models.Posts.Update(ctx, data.PostPatch{
 			ID:       newPost.ID,
 			ThreadID: newPost.ThreadID,
-			Content:  &updatedContent,
+			Content:  sql.NullString{Valid: true, String: updatedContent},
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, updatedPost.Content, updatedContent)

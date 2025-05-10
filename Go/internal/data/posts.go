@@ -51,7 +51,7 @@ type PostPatch struct {
 	// ThreadID is the ID of the parent thread.
 	ThreadID uuid.UUID `json:"threadId"`
 	// Content is the actual text content of a post
-	Content *string `json:"content"`
+	Content sql.NullString `json:"content"`
 }
 
 type PostModel struct {
