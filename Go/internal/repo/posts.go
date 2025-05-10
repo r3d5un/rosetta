@@ -345,3 +345,19 @@ func (r *PostRepository) Restore(ctx context.Context, id uuid.UUID) (*Post, erro
 
 	return newPostFromRow(*row), nil
 }
+
+func (r *PostRepository) PermanentlyDelete(ctx context.Context, id uuid.UUID) (*Post, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.String("id", id.String())))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "deleting post")
+	row, err := r.models.Posts.Delete(ctx, id)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to delete post", slog.String("error", err.Error()),
+		)
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "post deleted")
+
+	return newPostFromRow(*row), nil
+}
