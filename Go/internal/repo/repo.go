@@ -8,12 +8,15 @@ type Repository struct {
 	ForumWriter  ForumWriter
 	ThreadReader ThreadWriter
 	ThreadWriter ThreadWriter
+	PostReader   PostReader
+	PostWriter   PostWriter
 }
 
 func NewRepository(models *data.Models) Repository {
 	userRepo := NewUserRepository(models)
 	forumRepo := NewForumRepository(models, &userRepo)
 	threadRepo := NewThreadRepository(models, &forumRepo, &userRepo)
+	postRepo := NewPostRepository(models, &threadRepo, &userRepo)
 
 	return Repository{
 		models:       models,
@@ -21,5 +24,6 @@ func NewRepository(models *data.Models) Repository {
 		ForumWriter:  &forumRepo,
 		ThreadReader: &threadRepo,
 		ThreadWriter: &threadRepo,
+		PostReader:   &postRepo,
 	}
 }

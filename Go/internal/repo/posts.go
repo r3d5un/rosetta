@@ -205,3 +205,95 @@ func (r *PostRepository) Read(ctx context.Context, id uuid.UUID, include bool) (
 
 	return post, nil
 }
+
+func (r *PostRepository) List(
+	ctx context.Context,
+	filter data.Filters,
+	include bool,
+) ([]*Post, *data.Metadata, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.Any("filters", filter), slog.Bool("include", include)))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "retrieving posts")
+	rows, metadata, err := r.models.Posts.SelectAll(ctx, filter)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to select posts", slog.String("error", err.Error()),
+		)
+	}
+	logger = logging.LoggerFromContext(ctx).With(slog.Group(
+		"parameters",
+		slog.Any("filters", filter),
+		slog.Any("metadata", metadata)),
+		slog.Bool("include", include))
+	logger.LogAttrs(ctx, slog.LevelInfo, "posts retrieved")
+
+	posts := make([]*Post, len(rows))
+	var wg sync.WaitGroup
+	errCh := make(chan error, len(rows)*3)
+	var postsMu sync.Mutex
+
+	for i, row := range rows {
+		posts[i] = newPostFromRow(*row)
+
+		if !include {
+			continue
+		}
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			author, err := r.userReader.Read(ctx, posts[i].AuthorID, false)
+			if err != nil {
+				errCh <- err
+				return
+			}
+
+			postsMu.Lock()
+			posts[i].Author = author
+			postsMu.Unlock()
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			thread, err := r.threadReader.Read(ctx, posts[i].ThreadID, true)
+			if err != nil {
+				errCh <- err
+				return
+			}
+
+			postsMu.Lock()
+			posts[i].Thread = thread
+			postsMu.Unlock()
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			votes, err := r.models.PostVotes.SelectSum(
+				ctx,
+				data.Filters{ThreadID: &posts[i].ID},
+			)
+			if err != nil {
+				errCh <- err
+				return
+			}
+
+			postsMu.Lock()
+			posts[i].Votes = votes
+			postsMu.Unlock()
+		}()
+	}
+
+	wg.Wait()
+	close(errCh)
+
+	for err := range errCh {
+		if err != nil {
+			logger.Error("unable to include all data", slog.String("error", err.Error()))
+		}
+	}
+
+	return posts, metadata, nil
+}
