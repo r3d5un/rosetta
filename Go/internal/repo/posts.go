@@ -313,3 +313,19 @@ func (r *PostRepository) Create(ctx context.Context, post Post) (*Post, error) {
 
 	return newPostFromRow(*row), nil
 }
+
+func (r *PostRepository) Delete(ctx context.Context, id uuid.UUID) (*Post, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.String("id", id.String())))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "deleting post")
+	row, err := r.models.Posts.SoftDelete(ctx, id)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to delete post", slog.String("error", err.Error()),
+		)
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "post deleted")
+
+	return newPostFromRow(*row), nil
+}
