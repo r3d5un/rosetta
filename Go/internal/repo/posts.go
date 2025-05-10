@@ -329,3 +329,19 @@ func (r *PostRepository) Delete(ctx context.Context, id uuid.UUID) (*Post, error
 
 	return newPostFromRow(*row), nil
 }
+
+func (r *PostRepository) Restore(ctx context.Context, id uuid.UUID) (*Post, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.String("id", id.String())))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "restoring post")
+	row, err := r.models.Posts.Restore(ctx, id)
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to restore post", slog.String("error", err.Error()),
+		)
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "post restored")
+
+	return newPostFromRow(*row), nil
+}
