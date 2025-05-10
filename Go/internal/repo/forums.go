@@ -154,9 +154,14 @@ func (r *ForumRepository) Read(ctx context.Context, id uuid.UUID, include bool) 
 		forumMu.Unlock()
 	}()
 
+	wg.Wait()
 	close(errCh)
 
-	wg.Wait()
+	for err := range errCh {
+		if err != nil {
+			logger.Error("unable to include all data", slog.String("error", err.Error()))
+		}
+	}
 
 	return forum, nil
 }

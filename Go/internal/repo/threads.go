@@ -140,16 +140,16 @@ func (r *ThreadRepository) Read(ctx context.Context, id uuid.UUID, include bool)
 	logger := logging.LoggerFromContext(ctx).
 		With(slog.Group("parameters", slog.String("id", id.String()), slog.Bool("include", include)))
 
-	logger.LogAttrs(ctx, slog.LevelInfo, "retrieving user")
+	logger.LogAttrs(ctx, slog.LevelInfo, "retrieving thread")
 	row, err := r.models.Threads.Select(ctx, id)
 	if err != nil {
 		logger.LogAttrs(
-			ctx, slog.LevelError, "unable to select user", slog.String("error", err.Error()),
+			ctx, slog.LevelError, "unable to select thread", slog.String("error", err.Error()),
 		)
 		return nil, err
 	}
 	thread := newThreadFromRow(*row)
-	logger.LogAttrs(ctx, slog.LevelInfo, "user retrieved")
+	logger.LogAttrs(ctx, slog.LevelInfo, "thread retrieved")
 
 	if !include {
 		return thread, nil
@@ -206,6 +206,12 @@ func (r *ThreadRepository) Read(ctx context.Context, id uuid.UUID, include bool)
 
 	wg.Wait()
 	close(errCh)
+
+	for err := range errCh {
+		if err != nil {
+			logger.Error("unable to include all data", slog.String("error", err.Error()))
+		}
+	}
 
 	return thread, nil
 }
