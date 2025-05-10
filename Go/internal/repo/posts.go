@@ -297,3 +297,19 @@ func (r *PostRepository) List(
 
 	return posts, metadata, nil
 }
+
+func (r *PostRepository) Create(ctx context.Context, post Post) (*Post, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.Any("post", post)))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "creating post")
+	row, err := r.models.Posts.Insert(ctx, post.Row())
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to create post", slog.String("error", err.Error()),
+		)
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "post created")
+
+	return newPostFromRow(*row), nil
+}
