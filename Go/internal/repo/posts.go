@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -84,4 +85,16 @@ func (p *PostPatch) Row() data.PostPatch {
 		ThreadID: p.ThreadID,
 		Content:  database.NewNullString(p.Content),
 	}
+}
+
+type PostReader interface {
+	Read(context.Context, uuid.UUID, bool) (*Post, error)
+	List(context.Context, data.Filters, bool) ([]*Post, *data.Metadata, error)
+}
+
+type PostWriter interface {
+	Create(context.Context, Post) (*Post, error)
+	Delete(context.Context, uuid.UUID) (*Post, error)
+	Restore(context.Context, uuid.UUID) (*Post, error)
+	PermanentlyDelete(context.Context, uuid.UUID) (*Post, error)
 }
