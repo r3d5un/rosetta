@@ -98,3 +98,21 @@ type PostWriter interface {
 	Restore(context.Context, uuid.UUID) (*Post, error)
 	PermanentlyDelete(context.Context, uuid.UUID) (*Post, error)
 }
+
+type PostRepository struct {
+	models       *data.Models
+	threadReader ThreadReader
+	userReader   UserReader
+}
+
+func NewPostRepository(
+	models *data.Models,
+	threadReader ThreadReader,
+	userReader UserReader,
+) PostRepository {
+	return PostRepository{
+		models:       models,
+		threadReader: threadReader,
+		userReader:   userReader,
+	}
+}
