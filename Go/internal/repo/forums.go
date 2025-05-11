@@ -42,6 +42,8 @@ type Forum struct {
 	DeletedAt *time.Time `json:"deletedAt,omitzero"`
 	// Owner is the user which owns the forum.
 	Owner *User `json:"owner,omitzero"`
+	// ThreadCount is the number of threads within the forum
+	ThreadCount *int `json:"threadCount,omitzero"`
 }
 
 func newForumFromRow(row data.Forum) *Forum {
@@ -137,7 +139,7 @@ func (r *ForumRepository) Read(ctx context.Context, id uuid.UUID, include bool) 
 	}
 
 	var wg sync.WaitGroup
-	errCh := make(chan error, 1)
+	errCh := make(chan error, 2)
 	var forumMu sync.Mutex
 
 	wg.Add(1)
@@ -151,6 +153,20 @@ func (r *ForumRepository) Read(ctx context.Context, id uuid.UUID, include bool) 
 
 		forumMu.Lock()
 		forum.Owner = owner
+		forumMu.Unlock()
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		count, err := r.models.Threads.SelectCount(ctx, data.Filters{ForumID: &forum.ID})
+		if err != nil {
+			errCh <- err
+			return
+		}
+
+		forumMu.Lock()
+		forum.ThreadCount = count
 		forumMu.Unlock()
 	}()
 
@@ -190,7 +206,7 @@ func (r *ForumRepository) List(
 
 	forums := make([]*Forum, len(rows))
 	var wg sync.WaitGroup
-	errCh := make(chan error, len(rows)*1)
+	errCh := make(chan error, len(rows)*2)
 	var forumsMu sync.Mutex
 
 	for i, row := range rows {
@@ -211,6 +227,20 @@ func (r *ForumRepository) List(
 
 			forumsMu.Lock()
 			forums[i].Owner = owner
+			forumsMu.Unlock()
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			count, err := r.models.Threads.SelectCount(ctx, data.Filters{ForumID: &forums[i].ID})
+			if err != nil {
+				errCh <- err
+				return
+			}
+
+			forumsMu.Lock()
+			forums[i].ThreadCount = count
 			forumsMu.Unlock()
 		}()
 	}
