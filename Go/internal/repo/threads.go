@@ -52,6 +52,8 @@ type Thread struct {
 	Author *User `json:"author,omitzero"`
 	// Votes is the sum of votes the thread has received
 	Votes *int `json:"votes,omitzero"`
+	// PostCount is the number of posts within a thread
+	PostCount *int `json:"post_count,omitzero"`
 }
 
 func newThreadFromRow(row data.Thread) *Thread {
@@ -156,7 +158,7 @@ func (r *ThreadRepository) Read(ctx context.Context, id uuid.UUID, include bool)
 	}
 
 	var wg sync.WaitGroup
-	errCh := make(chan error, 3)
+	errCh := make(chan error, 4)
 	var threadMu sync.Mutex
 
 	wg.Add(1)
@@ -204,6 +206,20 @@ func (r *ThreadRepository) Read(ctx context.Context, id uuid.UUID, include bool)
 		threadMu.Unlock()
 	}()
 
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		count, err := r.models.Posts.SelectCount(ctx, data.Filters{ThreadID: &thread.ID})
+		if err != nil {
+			errCh <- err
+			return
+		}
+
+		threadMu.Lock()
+		thread.PostCount = count
+		threadMu.Unlock()
+	}()
+
 	wg.Wait()
 	close(errCh)
 
@@ -240,7 +256,7 @@ func (r *ThreadRepository) List(
 
 	threads := make([]*Thread, len(rows))
 	var wg sync.WaitGroup
-	errCh := make(chan error, len(rows)*3)
+	errCh := make(chan error, len(rows)*4)
 	var threadsMu sync.Mutex
 
 	for i, row := range rows {
@@ -292,6 +308,23 @@ func (r *ThreadRepository) List(
 
 			threadsMu.Lock()
 			threads[i].Votes = votes
+			threadsMu.Unlock()
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			count, err := r.models.Posts.SelectCount(
+				ctx,
+				data.Filters{ThreadID: &threads[i].ID},
+			)
+			if err != nil {
+				errCh <- err
+				return
+			}
+
+			threadsMu.Lock()
+			threads[i].PostCount = count
 			threadsMu.Unlock()
 		}()
 	}
