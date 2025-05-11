@@ -62,6 +62,15 @@ func TestPostModel(t *testing.T) {
 		assert.GreaterOrEqual(t, len(selectedPosts), 0)
 	})
 
+	t.Run("SelectCount", func(t *testing.T) {
+		countedPosts, err := models.Posts.SelectCount(
+			ctx,
+			data.Filters{ThreadID: &newPost.ThreadID},
+		)
+		assert.NoError(t, err)
+		assert.GreaterOrEqual(t, *countedPosts, 0)
+	})
+
 	t.Run("Update", func(t *testing.T) {
 		updatedContent := "A rogue taxi is nearby, here are the precise coordinates: 1.1.1.1"
 		updatedPost, err := models.Posts.Update(ctx, data.PostPatch{

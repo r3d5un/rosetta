@@ -205,6 +205,56 @@ LIMIT $1::INTEGER;
 	return posts, &metadata, nil
 }
 
+func (m *PostModel) SelectCount(ctx context.Context, filters Filters) (*int, error) {
+	query := `
+SELECT COUNT(*) AS "count"
+FROM forum.posts
+WHERE ($1::UUID IS NULL OR id = $1::UUID)
+  AND ($2::UUID IS NULL OR thread_id = $2::UUID)
+  AND ($3::UUID IS NULL OR author_id = $3::UUID)
+  AND ($4::TIMESTAMP IS NULL or created_at >= $4::TIMESTAMP)
+  AND ($5::TIMESTAMP IS NULL or created_at <= $5::TIMESTAMP)
+  AND ($6::TIMESTAMP IS NULL or updated_at >= $6::TIMESTAMP)
+  AND ($7::TIMESTAMP IS NULL or updated_at <= $7::TIMESTAMP)
+  AND ($8::BOOLEAN IS NULL or deleted = $8::BOOLEAN)
+  AND ($9::TIMESTAMP IS NULL or deleted_at >= $9::TIMESTAMP)
+  AND ($10::TIMESTAMP IS NULL or deleted_at <= $10::TIMESTAMP);
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("query", logging.MinifySQL(query)),
+		slog.Any("filters", filters),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	var count int
+
+	logger.Info("performing query")
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		filters.ID,
+		filters.ThreadID,
+		filters.AuthorID,
+		filters.CreatedAtFrom,
+		filters.CreatedAtTo,
+		filters.UpdatedAtFrom,
+		filters.UpdatedAtTo,
+		filters.Deleted,
+		filters.DeletedAtFrom,
+		filters.DeletedAtTo,
+	).Scan(
+		&count,
+	)
+	if err != nil {
+		return nil, handleError(err, logger)
+	}
+	logger.Info("posts counted", slog.Any("count", count))
+
+	return &count, nil
+}
+
 func (m *PostModel) Insert(ctx context.Context, input Post) (*Post, error) {
 	const query string = `
 INSERT INTO forum.posts(thread_id, reply_to, content, author_id)
