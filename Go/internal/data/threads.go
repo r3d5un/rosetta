@@ -75,7 +75,7 @@ WHERE id = $1::UUID;
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("query", query),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.Any("id", id),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -135,7 +135,7 @@ LIMIT $1::INTEGER;
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("query", query),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.Any("filters", filters),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -210,7 +210,7 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("query", query),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.Any("input", input),
 		slog.Duration("timeout", *m.Timeout),
 	))

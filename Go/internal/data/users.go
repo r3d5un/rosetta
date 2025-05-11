@@ -80,7 +80,7 @@ WHERE id = $1;
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("query", query),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.String("id", id.String()),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -133,7 +133,7 @@ LIMIT $1::INTEGER
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("statement", logging.MinifySQL(query)),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.Any("filters", filters),
 	))
 
@@ -200,7 +200,7 @@ RETURNING id, name, username, email, created_at, updated_at, deleted, deleted_at
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("statement", logging.MinifySQL(query)),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.Any("input", input),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -249,7 +249,7 @@ RETURNING id, name, username, email, created_at, updated_at, deleted, deleted_at
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("statement", logging.MinifySQL(query)),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.Any("input", input),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -298,7 +298,7 @@ RETURNING id, name, username, email, created_at, updated_at, deleted, deleted_at
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("statement", logging.MinifySQL(query)),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.String("id", id.String()),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -342,7 +342,7 @@ RETURNING id, name, username, email, created_at, updated_at, deleted, deleted_at
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("statement", logging.MinifySQL(query)),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.String("id", id.String()),
 		slog.Duration("timeout", *m.Timeout),
 	))
@@ -384,7 +384,7 @@ RETURNING id, name, username, email, created_at, updated_at, deleted, deleted_at
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
-		slog.String("statement", logging.MinifySQL(query)),
+		slog.String("query", logging.MinifySQL(query)),
 		slog.String("id", id.String()),
 		slog.Duration("timeout", *m.Timeout),
 	))
