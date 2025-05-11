@@ -201,6 +201,62 @@ LIMIT $1::INTEGER;
 	return threads, &metadata, nil
 }
 
+func (m *ThreadModel) SelectCount(ctx context.Context, filters Filters) (*int, error) {
+	const query string = `
+SELECT COUNT(*)
+FROM forum.threads
+WHERE ($1::UUID IS NULL OR id = $1::UUID)
+  AND ($2::UUID IS NULL OR forum_id = $2::UUID)
+  AND ($3::VARCHAR(256) IS NULL OR title = $3::VARCHAR(256))
+  AND ($4::UUID IS NULL OR author_id = $4::UUID)
+  AND ($5::TIMESTAMP IS NULL or created_at >= $5::TIMESTAMP)
+  AND ($6::TIMESTAMP IS NULL or created_at <= $6::TIMESTAMP)
+  AND ($7::TIMESTAMP IS NULL or updated_at >= $7::TIMESTAMP)
+  AND ($8::TIMESTAMP IS NULL or updated_at <= $8::TIMESTAMP)
+  AND ($9::BOOLEAN IS NULL or is_locked = $9::BOOLEAN)
+  AND ($10::BOOLEAN IS NULL or deleted = $10::BOOLEAN)
+  AND ($11::TIMESTAMP IS NULL or deleted_at >= $11::TIMESTAMP)
+  AND ($12::TIMESTAMP IS NULL or deleted_at <= $12::TIMESTAMP);
+`
+
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"query",
+		slog.String("query", logging.MinifySQL(query)),
+		slog.Any("filters", filters),
+		slog.Duration("timeout", *m.Timeout),
+	))
+
+	ctx, cancel := context.WithTimeout(ctx, *m.Timeout)
+	defer cancel()
+
+	logger.Info("performing query")
+	var count int
+	err := m.DB.QueryRow(
+		ctx,
+		query,
+		filters.ID,
+		filters.ForumID,
+		filters.Title,
+		filters.AuthorID,
+		filters.CreatedAtFrom,
+		filters.CreatedAtTo,
+		filters.UpdatedAtFrom,
+		filters.UpdatedAtTo,
+		filters.IsLocked,
+		filters.Deleted,
+		filters.DeletedAtFrom,
+		filters.DeletedAtTo,
+	).Scan(
+		&count,
+	)
+	if err != nil {
+		return nil, handleError(err, logger)
+	}
+	logger.Info("thread selected", slog.Int("count", count))
+
+	return &count, nil
+}
+
 func (m *ThreadModel) Insert(ctx context.Context, input Thread) (*Thread, error) {
 	const query string = `
 INSERT INTO forum.threads(forum_id, title, author_id)

@@ -69,6 +69,15 @@ func TestThreadModel(t *testing.T) {
 		}
 	})
 
+	t.Run("SelectCount", func(t *testing.T) {
+		countedPosts, err := models.Threads.SelectCount(
+			ctx,
+			data.Filters{ThreadID: &newThread.ForumID},
+		)
+		assert.NoError(t, err)
+		assert.GreaterOrEqual(t, *countedPosts, 0)
+	})
+
 	t.Run("Update", func(t *testing.T) {
 		newTitle := "Neurochipped Johnny Boy"
 		updatedThread, err := models.Threads.Update(ctx, data.ThreadPatch{
