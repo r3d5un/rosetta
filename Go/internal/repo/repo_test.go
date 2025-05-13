@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/r3d5un/rosetta/Go/internal/data"
 	"github.com/r3d5un/rosetta/Go/internal/database"
+	"github.com/r3d5un/rosetta/Go/internal/repo"
 	"github.com/r3d5un/rosetta/Go/internal/testsuite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -24,6 +25,7 @@ const (
 	dbPassword        = "postgres"
 )
 
+var repository repo.Repository
 var models data.Models
 var db *pgxpool.Pool
 
@@ -90,6 +92,7 @@ func TestMain(m *testing.M) {
 	}
 	timeout := dbConfig.TimeoutDuration()
 	models = data.NewModels(db, &timeout)
+	repository = repo.NewRepository(&models)
 
 	exitCode := m.Run()
 
