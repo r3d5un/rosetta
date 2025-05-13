@@ -176,7 +176,7 @@ func (r *UserRepository) Create(ctx context.Context, user User) (*User, error) {
 			ctx, slog.LevelError, "unable to create user", slog.String("error", err.Error()),
 		)
 	}
-	logger.LogAttrs(ctx, slog.LevelInfo, "user created")
+	logger.LogAttrs(ctx, slog.LevelInfo, "user created", slog.Any("row", row))
 
 	return newUserFromRow(*row), nil
 }
