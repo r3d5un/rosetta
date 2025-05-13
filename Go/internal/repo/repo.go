@@ -10,6 +10,8 @@ type Repository struct {
 	ThreadWriter ThreadWriter
 	PostReader   PostReader
 	PostWriter   PostWriter
+	UserReader   UserReader
+	UserWriter   UserWriter
 }
 
 func NewRepository(models *data.Models) Repository {
@@ -25,5 +27,8 @@ func NewRepository(models *data.Models) Repository {
 		ThreadReader: &threadRepo,
 		ThreadWriter: &threadRepo,
 		PostReader:   &postRepo,
+		PostWriter:   &postRepo,
+		UserReader:   &userRepo,
+		UserWriter:   &userRepo,
 	}
 }
