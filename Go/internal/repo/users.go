@@ -105,6 +105,7 @@ type UserReader interface {
 
 type UserWriter interface {
 	Create(context.Context, User) (*User, error)
+	Update(context.Context, UserPatch) (*User, error)
 	Delete(context.Context, uuid.UUID) (*User, error)
 	Restore(context.Context, uuid.UUID) (*User, error)
 	PermanentlyDelete(context.Context, uuid.UUID) (*User, error)
@@ -163,6 +164,23 @@ func (r *UserRepository) List(
 	}
 
 	return users, metadata, nil
+}
+
+func (r *UserRepository) Update(ctx context.Context, patch UserPatch) (*User, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.Any("patch", patch)))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "updating user")
+	row, err := r.models.Users.Update(ctx, patch.Row())
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to update user", slog.String("error", err.Error()),
+		)
+		return nil, err
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "user updated")
+
+	return newUserFromRow(*row), nil
 }
 
 func (r *UserRepository) Create(ctx context.Context, user User) (*User, error) {
