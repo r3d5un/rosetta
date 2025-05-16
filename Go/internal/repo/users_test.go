@@ -39,4 +39,15 @@ func TestUserRepository(t *testing.T) {
 		assert.NotEmpty(t, metadata)
 		assert.GreaterOrEqual(t, len(u), 1)
 	})
+
+	t.Run("Update", func(t *testing.T) {
+		username := "silverhand"
+		u, err := repository.UserWriter.Update(
+			ctx,
+			repo.UserPatch{ID: user.ID, Username: &username},
+		)
+		assert.NoError(t, err)
+		assert.Equal(t, u.ID, user.ID)
+		assert.Equal(t, u.Username, username)
+	})
 }
