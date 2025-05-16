@@ -25,4 +25,10 @@ func TestUserRepository(t *testing.T) {
 
 		user = *u
 	})
+
+	t.Run("Read", func(t *testing.T) {
+		u, err := repository.UserReader.Read(ctx, user.ID, true)
+		assert.NoError(t, err)
+		assert.Equal(t, u.ID, user.ID)
+	})
 }
