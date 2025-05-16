@@ -50,4 +50,21 @@ func TestUserRepository(t *testing.T) {
 		assert.Equal(t, u.ID, user.ID)
 		assert.Equal(t, u.Username, username)
 	})
+
+	t.Run("Delete", func(t *testing.T) {
+		u, err := repository.UserWriter.Delete(ctx, user.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, u.Deleted, true)
+	})
+
+	t.Run("Restore", func(t *testing.T) {
+		u, err := repository.UserWriter.Restore(ctx, user.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, u.Deleted, false)
+	})
+
+	t.Run("PermanentlyDelete", func(t *testing.T) {
+		_, err := repository.UserWriter.PermanentlyDelete(ctx, user.ID)
+		assert.NoError(t, err)
+	})
 }
