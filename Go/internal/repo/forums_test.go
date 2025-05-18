@@ -34,6 +34,9 @@ func TestForumRepository(t *testing.T) {
 	})
 
 	t.Run("Read", func(t *testing.T) {
+		f, err := repository.ForumReader.Read(ctx, forum.ID, true)
+		assert.NoError(t, err)
+		assert.Equal(t, f.ID, forum.ID)
 	})
 
 	t.Run("List", func(t *testing.T) {
