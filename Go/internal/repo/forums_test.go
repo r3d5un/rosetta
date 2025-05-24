@@ -65,6 +65,9 @@ func TestForumRepository(t *testing.T) {
 	})
 
 	t.Run("Restore", func(t *testing.T) {
+		f, err := repository.ForumWriter.Restore(ctx, forum.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, f.Deleted, false)
 	})
 
 	t.Run("PermanentlyDelete", func(t *testing.T) {
