@@ -13,9 +13,6 @@ import (
 
 type Forum struct {
 	// ID is the unique identifier of a forum.
-	//
-	// Upon creating a new forum, any existing values in this field is ignored. The database handles
-	// setting the value upon insertion.
 	ID uuid.UUID `json:"id"`
 	// OwnerID is the unique identifier of a forum.
 	OwnerID uuid.UUID `json:"ownerId"`
@@ -39,6 +36,15 @@ type Forum struct {
 	//
 	// This field is ignored when updating or creating new forums.
 	DeletedAt sql.NullTime `json:"deletedAt,omitzero"`
+}
+
+type ForumInput struct {
+	// OwnerID is the unique identifier of a forum.
+	OwnerID uuid.UUID `json:"ownerId"`
+	// Name is the human readable name of the forum
+	Name string `json:"name"`
+	// Description contains a description about the purposes and topics of a forum.
+	Description sql.NullString `json:"description,omitzero"`
 }
 
 type ForumPatch struct {
@@ -186,7 +192,7 @@ LIMIT $1::INTEGER
 	return forums, &metadata, nil
 }
 
-func (m *ForumModel) Insert(ctx context.Context, input Forum) (*Forum, error) {
+func (m *ForumModel) Insert(ctx context.Context, input ForumInput) (*Forum, error) {
 	const query string = `
 INSERT INTO forum.forums(owner_id, name, description)
 VALUES($1, $2, $3)

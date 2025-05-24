@@ -22,7 +22,7 @@ func TestThreadModel(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	forum, err := models.Forums.Insert(ctx, data.Forum{
+	forum, err := models.Forums.Insert(ctx, data.ForumInput{
 		OwnerID: user.ID,
 		Name:    "Crushing Militech",
 	})

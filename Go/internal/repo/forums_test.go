@@ -21,13 +21,13 @@ func TestForumRepository(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	forum := repo.Forum{
-		OwnerID: u.ID,
-		Name:    "Crushing Militech",
-	}
+	var forum repo.Forum
 
 	t.Run("Create", func(t *testing.T) {
-		f, err := repository.ForumWriter.Create(ctx, forum)
+		f, err := repository.ForumWriter.Create(ctx, repo.ForumInput{
+			OwnerID: u.ID,
+			Name:    "Crushing Militech",
+		})
 		assert.NoError(t, err)
 
 		forum = *f

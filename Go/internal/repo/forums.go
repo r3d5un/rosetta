@@ -59,16 +59,20 @@ func newForumFromRow(row data.Forum) *Forum {
 	}
 }
 
-func (f *Forum) Row() data.Forum {
-	return data.Forum{
-		ID:          f.ID,
+type ForumInput struct {
+	// OwnerID is the unique identifier of a forum.
+	OwnerID uuid.UUID `json:"ownerId"`
+	// Name is the human readable name of the forum
+	Name string `json:"name"`
+	// Description contains a description about the purposes and topics of a forum.
+	Description *string `json:"description,omitzero"`
+}
+
+func (f *ForumInput) Row() data.ForumInput {
+	return data.ForumInput{
 		OwnerID:     f.OwnerID,
 		Name:        f.Name,
 		Description: database.NewNullString(f.Description),
-		CreatedAt:   f.CreatedAt,
-		UpdatedAt:   f.UpdatedAt,
-		Deleted:     f.Deleted,
-		DeletedAt:   database.NewNullTime(f.DeletedAt),
 	}
 }
 
@@ -101,7 +105,7 @@ type ForumReader interface {
 }
 
 type ForumWriter interface {
-	Create(context.Context, Forum) (*Forum, error)
+	Create(context.Context, ForumInput) (*Forum, error)
 	Delete(context.Context, uuid.UUID) (*Forum, error)
 	Update(context.Context, ForumPatch) (*Forum, error)
 	Restore(context.Context, uuid.UUID) (*Forum, error)
@@ -258,12 +262,12 @@ func (r *ForumRepository) List(
 	return forums, metadata, nil
 }
 
-func (r *ForumRepository) Create(ctx context.Context, forum Forum) (*Forum, error) {
+func (r *ForumRepository) Create(ctx context.Context, input ForumInput) (*Forum, error) {
 	logger := logging.LoggerFromContext(ctx).
-		With(slog.Group("parameters", slog.Any("forum", forum)))
+		With(slog.Group("parameters", slog.Any("forum", input)))
 
 	logger.LogAttrs(ctx, slog.LevelInfo, "creating forum")
-	row, err := r.models.Forums.Insert(ctx, forum.Row())
+	row, err := r.models.Forums.Insert(ctx, input.Row())
 	if err != nil {
 		logger.LogAttrs(
 			ctx, slog.LevelError, "unable to create forum", slog.String("error", err.Error()),

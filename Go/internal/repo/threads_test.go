@@ -21,11 +21,10 @@ func TestThreadRepository(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	forum := repo.Forum{
+	f, err := repository.ForumWriter.Create(ctx, repo.ForumInput{
 		OwnerID: u.ID,
 		Name:    "Crushing Militech",
-	}
-	f, err := repository.ForumWriter.Create(ctx, forum)
+	})
 	assert.NoError(t, err)
 
 	thread := repo.Thread{

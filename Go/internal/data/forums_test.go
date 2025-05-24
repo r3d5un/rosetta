@@ -22,13 +22,13 @@ func TestForumModel(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	newForum := data.Forum{
-		OwnerID: user.ID,
-		Name:    "Crushing Militech",
-	}
+	var forum data.Forum
 
 	t.Run("Insert", func(t *testing.T) {
-		f, err := models.Forums.Insert(ctx, newForum)
+		f, err := models.Forums.Insert(ctx, data.ForumInput{
+			OwnerID: user.ID,
+			Name:    "Crushing Militech",
+		})
 		assert.NoError(t, err)
 
 		if f.ID == uuid.MustParse("00000000-0000-0000-0000-000000000000") {
@@ -36,13 +36,13 @@ func TestForumModel(t *testing.T) {
 			return
 		}
 
-		newForum = *f
+		forum = *f
 	})
 
 	t.Run("Select", func(t *testing.T) {
-		f, err := models.Forums.Select(ctx, newForum.ID)
+		f, err := models.Forums.Select(ctx, forum.ID)
 		assert.NoError(t, err)
-		if !assert.Equal(t, newForum, *f) {
+		if !assert.Equal(t, forum, *f) {
 			t.Error("inserted and selected forums do not match")
 			return
 		}
@@ -65,28 +65,28 @@ func TestForumModel(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		newName := "Surviving Militech"
 		updatedForum, err := models.Forums.Update(ctx, data.ForumPatch{
-			ID:   newForum.ID,
+			ID:   forum.ID,
 			Name: sql.NullString{Valid: true, String: newName},
 		})
 		assert.NoError(t, err)
-		assert.NotEqual(t, newForum, *updatedForum)
+		assert.NotEqual(t, forum, *updatedForum)
 		assert.Equal(t, newName, updatedForum.Name)
 	})
 
 	t.Run("SoftDelete", func(t *testing.T) {
-		deletedForum, err := models.Forums.SoftDelete(ctx, newForum.ID)
+		deletedForum, err := models.Forums.SoftDelete(ctx, forum.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, deletedForum.Deleted, true)
 	})
 
 	t.Run("Restore", func(t *testing.T) {
-		restoreForum, err := models.Forums.Restore(ctx, newForum.ID)
+		restoreForum, err := models.Forums.Restore(ctx, forum.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, restoreForum.Deleted, false)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
-		deletedForum, err := models.Forums.Delete(ctx, newForum.ID)
+		deletedForum, err := models.Forums.Delete(ctx, forum.ID)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, deletedForum)
 	})
