@@ -81,5 +81,7 @@ func TestThreadRepository(t *testing.T) {
 	})
 
 	t.Run("PermanentlyDelete", func(t *testing.T) {
+		_, err := repository.ThreadWriter.PermanentlyDelete(ctx, thread.ID)
+		assert.NoError(t, err)
 	})
 }
