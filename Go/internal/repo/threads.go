@@ -115,6 +115,7 @@ type ThreadReader interface {
 
 type ThreadWriter interface {
 	Create(context.Context, Thread) (*Thread, error)
+	Update(context.Context, ThreadPatch) (*Thread, error)
 	Delete(context.Context, uuid.UUID) (*Thread, error)
 	Restore(context.Context, uuid.UUID) (*Thread, error)
 	PermanentlyDelete(context.Context, uuid.UUID) (*Thread, error)
@@ -353,6 +354,23 @@ func (r *ThreadRepository) Create(ctx context.Context, thread Thread) (*Thread, 
 		)
 	}
 	logger.LogAttrs(ctx, slog.LevelInfo, "thread created")
+
+	return newThreadFromRow(*row), nil
+}
+
+func (r *ThreadRepository) Update(ctx context.Context, patch ThreadPatch) (*Thread, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.Any("patch", patch)))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "updating thread")
+	row, err := r.models.Threads.Update(ctx, patch.Row())
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to update thread", slog.String("error", err.Error()),
+		)
+		return nil, err
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "thread updated")
 
 	return newThreadFromRow(*row), nil
 }
