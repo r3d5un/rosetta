@@ -75,6 +75,9 @@ func TestThreadRepository(t *testing.T) {
 	})
 
 	t.Run("Restore", func(t *testing.T) {
+		restoredThread, err := repository.ThreadWriter.Restore(ctx, thread.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, restoredThread.Deleted, false)
 	})
 
 	t.Run("PermanentlyDelete", func(t *testing.T) {
