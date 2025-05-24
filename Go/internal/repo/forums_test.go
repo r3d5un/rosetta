@@ -71,5 +71,7 @@ func TestForumRepository(t *testing.T) {
 	})
 
 	t.Run("PermanentlyDelete", func(t *testing.T) {
+		_, err := repository.ForumWriter.PermanentlyDelete(ctx, forum.ID)
+		assert.NoError(t, err)
 	})
 }
