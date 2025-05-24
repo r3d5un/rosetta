@@ -66,6 +66,15 @@ func TestPostRepository(t *testing.T) {
 	})
 
 	t.Run("Update", func(t *testing.T) {
+		updatedContent := "A rogue taxi is nearby, here are the precise coordinates: 1.1.1.1"
+		p, err := repository.PostWriter.Update(ctx, repo.PostPatch{
+			ID:       post.ID,
+			ThreadID: post.ThreadID,
+			Content:  &updatedContent,
+		})
+		assert.NoError(t, err)
+		assert.NotEqual(t, thread, *p)
+		assert.Equal(t, updatedContent, p.Content)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
