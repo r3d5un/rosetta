@@ -37,14 +37,14 @@ func TestPostRepository(t *testing.T) {
 	newThread, err := repository.ThreadWriter.Create(ctx, thread)
 	assert.NoError(t, err)
 
-	post := repo.Post{
-		ThreadID: newThread.ID,
-		Content:  "A rogue taxi is nearby, here are the precise coordinates",
-		AuthorID: u.ID,
-	}
+	var post repo.Post
 
 	t.Run("Create", func(t *testing.T) {
-		p, err := repository.PostWriter.Create(ctx, post)
+		p, err := repository.PostWriter.Create(ctx, repo.PostInput{
+			ThreadID: newThread.ID,
+			Content:  "A rogue taxi is nearby, here are the precise coordinates",
+			AuthorID: u.ID,
+		})
 		assert.NoError(t, err)
 
 		post = *p

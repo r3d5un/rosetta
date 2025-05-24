@@ -34,20 +34,16 @@ func TestPostVoteModel(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	newPost := data.Post{
+	post, err := models.Posts.Insert(ctx, data.PostInput{
 		ThreadID: insertedThread.ID,
 		ReplyTo:  uuid.NullUUID{Valid: false},
 		Content:  "Adam Smasher located at Arasaka reginal office. Moving to apprehend.",
 		AuthorID: user.ID,
-	}
-
-	insertedPost, err := models.Posts.Insert(ctx, newPost)
+	})
 	assert.NoError(t, err)
 
-	newPost = *insertedPost
-
 	newVote := data.PostVote{
-		PostID: insertedPost.ID,
+		PostID: post.ID,
 		UserID: user.ID,
 		Vote:   1,
 	}
@@ -60,7 +56,7 @@ func TestPostVoteModel(t *testing.T) {
 
 	t.Run("SelectSum", func(t *testing.T) {
 		count, err := models.PostVotes.SelectSum(ctx, data.Filters{
-			PostID: &insertedPost.ID,
+			PostID: &post.ID,
 			UserID: &user.ID,
 		})
 		assert.NoError(t, err)

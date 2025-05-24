@@ -35,24 +35,24 @@ func TestPostModel(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	newPost := data.Post{
-		ThreadID: insertedThread.ID,
-		ReplyTo:  uuid.NullUUID{Valid: false},
-		Content:  "A rogue taxi is nearby, here are the precise coordinates",
-		AuthorID: user.ID,
-	}
+	var post data.Post
 
 	t.Run("Insert", func(t *testing.T) {
-		insertedPost, err := models.Posts.Insert(ctx, newPost)
+		insertedPost, err := models.Posts.Insert(ctx, data.PostInput{
+			ThreadID: insertedThread.ID,
+			ReplyTo:  uuid.NullUUID{Valid: false},
+			Content:  "A rogue taxi is nearby, here are the precise coordinates",
+			AuthorID: user.ID,
+		})
 		assert.NoError(t, err)
 
-		newPost = *insertedPost
+		post = *insertedPost
 	})
 
 	t.Run("Select", func(t *testing.T) {
-		selectedPost, err := models.Posts.Select(ctx, newPost.ID)
+		selectedPost, err := models.Posts.Select(ctx, post.ID)
 		assert.NoError(t, err)
-		assert.Equal(t, newPost, *selectedPost)
+		assert.Equal(t, post, *selectedPost)
 	})
 
 	t.Run("SelectAll", func(t *testing.T) {
@@ -65,7 +65,7 @@ func TestPostModel(t *testing.T) {
 	t.Run("SelectCount", func(t *testing.T) {
 		countedPosts, err := models.Posts.SelectCount(
 			ctx,
-			data.Filters{ThreadID: &newPost.ThreadID},
+			data.Filters{ThreadID: &post.ThreadID},
 		)
 		assert.NoError(t, err)
 		assert.GreaterOrEqual(t, *countedPosts, 0)
@@ -74,8 +74,8 @@ func TestPostModel(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		updatedContent := "A rogue taxi is nearby, here are the precise coordinates: 1.1.1.1"
 		updatedPost, err := models.Posts.Update(ctx, data.PostPatch{
-			ID:       newPost.ID,
-			ThreadID: newPost.ThreadID,
+			ID:       post.ID,
+			ThreadID: post.ThreadID,
 			Content:  sql.NullString{Valid: true, String: updatedContent},
 		})
 		assert.NoError(t, err)
@@ -83,19 +83,19 @@ func TestPostModel(t *testing.T) {
 	})
 
 	t.Run("SoftDelete", func(t *testing.T) {
-		deletedPost, err := models.Posts.SoftDelete(ctx, newPost.ID)
+		deletedPost, err := models.Posts.SoftDelete(ctx, post.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, deletedPost.Deleted, true)
 	})
 
 	t.Run("Restore", func(t *testing.T) {
-		deletedPost, err := models.Posts.Restore(ctx, newPost.ID)
+		deletedPost, err := models.Posts.Restore(ctx, post.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, deletedPost.Deleted, false)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
-		deletedPost, err := models.Posts.Delete(ctx, newPost.ID)
+		deletedPost, err := models.Posts.Delete(ctx, post.ID)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, deletedPost)
 	})

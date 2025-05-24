@@ -64,18 +64,23 @@ func newPostFromRow(row data.Post) *Post {
 	}
 }
 
-func (p *Post) Row() data.Post {
-	return data.Post{
-		ID:        p.ID,
-		ThreadID:  p.ThreadID,
-		ReplyTo:   p.ReplyTo,
-		AuthorID:  p.AuthorID,
-		Content:   p.Content,
-		CreatedAt: p.CreatedAt,
-		UpdatedAt: p.UpdatedAt,
-		Likes:     p.Likes,
-		Deleted:   p.Deleted,
-		DeletedAt: database.NewNullTime(p.DeletedAt),
+type PostInput struct {
+	// ThreadID is the ID of the parent thread.
+	ThreadID uuid.UUID `json:"threadId"`
+	// ReplyTo is the ID of which this post is a reply to.
+	ReplyTo uuid.NullUUID `json:"replyTo"`
+	// AuthorID is the unique identifier of the author of the post.
+	AuthorID uuid.UUID `json:"authorId"`
+	// Content is the actual text content of a post
+	Content string `json:"content"`
+}
+
+func (p *PostInput) Row() data.PostInput {
+	return data.PostInput{
+		ThreadID: p.ThreadID,
+		ReplyTo:  p.ReplyTo,
+		AuthorID: p.AuthorID,
+		Content:  p.Content,
 	}
 }
 
@@ -85,7 +90,7 @@ type PostPatch struct {
 	// ThreadID is the ID of the parent thread.
 	ThreadID uuid.UUID `json:"threadId"`
 	// Content is the actual text content of a post
-	Content *string `json:"content"`
+	Content *string `json:"content,omitzero"`
 }
 
 func (p *PostPatch) Row() data.PostPatch {
@@ -102,7 +107,7 @@ type PostReader interface {
 }
 
 type PostWriter interface {
-	Create(context.Context, Post) (*Post, error)
+	Create(context.Context, PostInput) (*Post, error)
 	Update(context.Context, PostPatch) (*Post, error)
 	Delete(context.Context, uuid.UUID) (*Post, error)
 	Restore(context.Context, uuid.UUID) (*Post, error)
@@ -299,12 +304,12 @@ func (r *PostRepository) List(
 	return posts, metadata, nil
 }
 
-func (r *PostRepository) Create(ctx context.Context, post Post) (*Post, error) {
+func (r *PostRepository) Create(ctx context.Context, input PostInput) (*Post, error) {
 	logger := logging.LoggerFromContext(ctx).
-		With(slog.Group("parameters", slog.Any("post", post)))
+		With(slog.Group("parameters", slog.Any("input", input)))
 
 	logger.LogAttrs(ctx, slog.LevelInfo, "creating post")
-	row, err := r.models.Posts.Insert(ctx, post.Row())
+	row, err := r.models.Posts.Insert(ctx, input.Row())
 	if err != nil {
 		logger.LogAttrs(
 			ctx, slog.LevelError, "unable to create post", slog.String("error", err.Error()),

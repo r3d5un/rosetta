@@ -45,6 +45,17 @@ type Post struct {
 	DeletedAt sql.NullTime `json:"deletedAt,omitzero"`
 }
 
+type PostInput struct {
+	// ThreadID is the ID of the parent thread.
+	ThreadID uuid.UUID `json:"threadId"`
+	// ReplyTo is the ID of which this post is a reply to.
+	ReplyTo uuid.NullUUID `json:"replyTo"`
+	// AuthorID is the unique identifier of the author of the post.
+	AuthorID uuid.UUID `json:"authorId"`
+	// Content is the actual text content of a post
+	Content string `json:"content"`
+}
+
 type PostPatch struct {
 	// ID is the unique identifier of the post
 	ID uuid.UUID `json:"id"`
@@ -255,7 +266,7 @@ WHERE ($1::UUID IS NULL OR id = $1::UUID)
 	return &count, nil
 }
 
-func (m *PostModel) Insert(ctx context.Context, input Post) (*Post, error) {
+func (m *PostModel) Insert(ctx context.Context, input PostInput) (*Post, error) {
 	const query string = `
 INSERT INTO forum.posts(thread_id, reply_to, content, author_id)
 VALUES ($1::UUID,
