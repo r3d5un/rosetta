@@ -103,6 +103,7 @@ type PostReader interface {
 
 type PostWriter interface {
 	Create(context.Context, Post) (*Post, error)
+	Update(context.Context, PostPatch) (*Post, error)
 	Delete(context.Context, uuid.UUID) (*Post, error)
 	Restore(context.Context, uuid.UUID) (*Post, error)
 	PermanentlyDelete(context.Context, uuid.UUID) (*Post, error)
@@ -310,6 +311,23 @@ func (r *PostRepository) Create(ctx context.Context, post Post) (*Post, error) {
 		)
 	}
 	logger.LogAttrs(ctx, slog.LevelInfo, "post created")
+
+	return newPostFromRow(*row), nil
+}
+
+func (r *PostRepository) Update(ctx context.Context, patch PostPatch) (*Post, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.Any("patch", patch)))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "updating post")
+	row, err := r.models.Posts.Update(ctx, patch.Row())
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to update post", slog.String("error", err.Error()),
+		)
+		return nil, err
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "post updated")
 
 	return newPostFromRow(*row), nil
 }
