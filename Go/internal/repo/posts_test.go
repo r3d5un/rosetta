@@ -84,6 +84,9 @@ func TestPostRepository(t *testing.T) {
 	})
 
 	t.Run("Restore", func(t *testing.T) {
+		p, err := repository.PostWriter.Restore(ctx, post.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, p.Deleted, false)
 	})
 
 	t.Run("PermanentlyDelete", func(t *testing.T) {
