@@ -13,7 +13,7 @@ func TestThreadVoteModel(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	user, err := models.Users.Insert(ctx, data.User{
+	user, err := models.Users.Insert(ctx, data.UserInput{
 		Name:     "Hanako Arasaka",
 		Username: "h.arasaka",
 		Email:    "h.arasaka@arasaka.com",

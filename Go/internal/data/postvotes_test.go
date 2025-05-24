@@ -14,7 +14,7 @@ func TestPostVoteModel(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	user, err := models.Users.Insert(ctx, data.User{
+	user, err := models.Users.Insert(ctx, data.UserInput{
 		Name:     "Morgan Blackhand",
 		Username: "blackhand",
 		Email:    "blackhand@afterlife.com",

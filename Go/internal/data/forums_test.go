@@ -15,7 +15,7 @@ func TestForumModel(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	user, err := models.Users.Insert(ctx, data.User{
+	user, err := models.Users.Insert(ctx, data.UserInput{
 		Name:     "Saburo Arasaka",
 		Username: "s.arasaka",
 		Email:    "s.arasaka@arasaka.com",

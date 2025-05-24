@@ -14,14 +14,14 @@ func TestUserRepository(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	user := repo.User{
-		Name:     "Johnny Silverhand",
-		Username: "samurai",
-		Email:    "jsilverhand@samurai.com",
-	}
+	var user repo.User
 
 	t.Run("Create", func(t *testing.T) {
-		u, err := repository.UserWriter.Create(ctx, user)
+		u, err := repository.UserWriter.Create(ctx, repo.UserInput{
+			Name:     "Johnny Silverhand",
+			Username: "samurai",
+			Email:    "jsilverhand@samurai.com",
+		})
 		assert.NoError(t, err)
 
 		user = *u

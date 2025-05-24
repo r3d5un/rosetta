@@ -51,16 +51,20 @@ func newUserFromRow(row data.User) *User {
 	}
 }
 
-func (f *User) Row() data.User {
-	return data.User{
-		ID:        f.ID,
-		Name:      f.Name,
-		Username:  f.Username,
-		Email:     f.Email,
-		CreatedAt: f.CreatedAt,
-		UpdatedAt: f.UpdatedAt,
-		Deleted:   f.Deleted,
-		DeletedAt: database.NewNullTime(f.DeletedAt),
+type UserInput struct {
+	// Name is the full name of the user.
+	Name string `json:"name"`
+	// Username is the unique human readable name of the account.
+	Username string `json:"username,omitzero"`
+	// Email is the unique email beloging to a given user account.
+	Email string `json:"email,omitzero"`
+}
+
+func (f *UserInput) Row() data.UserInput {
+	return data.UserInput{
+		Name:     f.Name,
+		Username: f.Username,
+		Email:    f.Email,
 	}
 }
 
@@ -104,7 +108,7 @@ type UserReader interface {
 }
 
 type UserWriter interface {
-	Create(context.Context, User) (*User, error)
+	Create(context.Context, UserInput) (*User, error)
 	Update(context.Context, UserPatch) (*User, error)
 	Delete(context.Context, uuid.UUID) (*User, error)
 	Restore(context.Context, uuid.UUID) (*User, error)
@@ -183,12 +187,12 @@ func (r *UserRepository) Update(ctx context.Context, patch UserPatch) (*User, er
 	return newUserFromRow(*row), nil
 }
 
-func (r *UserRepository) Create(ctx context.Context, user User) (*User, error) {
+func (r *UserRepository) Create(ctx context.Context, input UserInput) (*User, error) {
 	logger := logging.LoggerFromContext(ctx).
-		With(slog.Group("parameters", slog.Any("user", user)))
+		With(slog.Group("parameters", slog.Any("input", input)))
 
 	logger.LogAttrs(ctx, slog.LevelInfo, "creating user")
-	row, err := r.models.Users.Insert(ctx, user.Row())
+	row, err := r.models.Users.Insert(ctx, input.Row())
 	if err != nil {
 		logger.LogAttrs(
 			ctx, slog.LevelError, "unable to create user", slog.String("error", err.Error()),

@@ -14,12 +14,11 @@ func TestThreadRepository(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	user := repo.User{
+	u, err := repository.UserWriter.Create(ctx, repo.UserInput{
 		Name:     "Adam Smasher",
 		Username: "a.smasher",
 		Email:    "a.smasher@arasaka.com",
-	}
-	u, err := repository.UserWriter.Create(ctx, user)
+	})
 	assert.NoError(t, err)
 
 	forum := repo.Forum{

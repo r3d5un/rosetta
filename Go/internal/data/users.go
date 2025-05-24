@@ -13,9 +13,6 @@ import (
 
 type User struct {
 	// ID is the unique identifier of a user.
-	//
-	// Upon creating a new user, any existing values in this field is ignored. The database handles
-	// setting the value upon insertion.
 	ID uuid.UUID `json:"id"`
 	// Name is the full name of the user.
 	Name string `json:"name"`
@@ -40,6 +37,15 @@ type User struct {
 	// Upon creating a new user, any existing values in this field is ignored. The database handles
 	// setting the value upon insertion.
 	DeletedAt sql.NullTime `json:"deletedAt,omitzero"`
+}
+
+type UserInput struct {
+	// Name is the full name of the user.
+	Name string `json:"name"`
+	// Username is the unique human readable name of the account.
+	Username string `json:"username,omitzero"`
+	// Email is the unique email beloging to a given user account.
+	Email string `json:"email,omitzero"`
 }
 
 type UserPatch struct {
@@ -191,7 +197,7 @@ LIMIT $1::INTEGER
 	return users, &metadata, nil
 }
 
-func (m *UserModel) Insert(ctx context.Context, input User) (*User, error) {
+func (m *UserModel) Insert(ctx context.Context, input UserInput) (*User, error) {
 	const query string = `
 INSERT INTO forum.users(name, username, email)
 VALUES ($1, $2, $3)
