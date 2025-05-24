@@ -79,9 +79,9 @@ type ForumPatch struct {
 	// setting the value upon insertion.
 	ID uuid.UUID `json:"id"`
 	// OwnerID is the unique identifier of a forum.
-	OwnerID *uuid.UUID `json:"ownerId"`
+	OwnerID *uuid.UUID `json:"ownerId,omitzero"`
 	// Name is the human readable name of the forum
-	Name *string `json:"name"`
+	Name *string `json:"name,omitzero"`
 	// Description contains a description about the purposes and topics of a forum.
 	Description *string `json:"description,omitzero"`
 }
