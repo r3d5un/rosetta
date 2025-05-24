@@ -59,6 +59,9 @@ func TestForumRepository(t *testing.T) {
 	})
 
 	t.Run("Delete", func(t *testing.T) {
+		f, err := repository.ForumWriter.Delete(ctx, forum.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, f.Deleted, true)
 	})
 
 	t.Run("Restore", func(t *testing.T) {
