@@ -103,6 +103,7 @@ type ForumReader interface {
 type ForumWriter interface {
 	Create(context.Context, Forum) (*Forum, error)
 	Delete(context.Context, uuid.UUID) (*Forum, error)
+	Update(context.Context, ForumPatch) (*Forum, error)
 	Restore(context.Context, uuid.UUID) (*Forum, error)
 	PermanentlyDelete(context.Context, uuid.UUID) (*Forum, error)
 }
@@ -269,6 +270,23 @@ func (r *ForumRepository) Create(ctx context.Context, forum Forum) (*Forum, erro
 		)
 	}
 	logger.LogAttrs(ctx, slog.LevelInfo, "forum created")
+
+	return newForumFromRow(*row), nil
+}
+
+func (r *ForumRepository) Update(ctx context.Context, patch ForumPatch) (*Forum, error) {
+	logger := logging.LoggerFromContext(ctx).
+		With(slog.Group("parameters", slog.Any("patch", patch)))
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "updating forum")
+	row, err := r.models.Forums.Update(ctx, patch.Row())
+	if err != nil {
+		logger.LogAttrs(
+			ctx, slog.LevelError, "unable to update forum", slog.String("error", err.Error()),
+		)
+		return nil, err
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "forum updated")
 
 	return newForumFromRow(*row), nil
 }
