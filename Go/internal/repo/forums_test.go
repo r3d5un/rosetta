@@ -48,6 +48,14 @@ func TestForumRepository(t *testing.T) {
 	})
 
 	t.Run("Update", func(t *testing.T) {
+		forumName := "Surviving Militech"
+		f, err := repository.ForumWriter.Update(
+			ctx,
+			repo.ForumPatch{ID: forum.ID, Name: &forumName},
+		)
+		assert.NoError(t, err)
+		assert.Equal(t, f.ID, forum.ID)
+		assert.Equal(t, f.Name, forumName)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
