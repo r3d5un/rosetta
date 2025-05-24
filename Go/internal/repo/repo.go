@@ -6,7 +6,7 @@ type Repository struct {
 	models       *data.Models
 	ForumReader  ForumReader
 	ForumWriter  ForumWriter
-	ThreadReader ThreadWriter
+	ThreadReader ThreadReader
 	ThreadWriter ThreadWriter
 	PostReader   PostReader
 	PostWriter   PostWriter
