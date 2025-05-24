@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/r3d5un/rosetta/Go/internal/data"
 	"github.com/r3d5un/rosetta/Go/internal/repo"
 	"github.com/stretchr/testify/assert"
 )
@@ -48,6 +49,12 @@ func TestThreadRepository(t *testing.T) {
 	})
 
 	t.Run("List", func(t *testing.T) {
+		listedThreads, metadata, err := repository.ThreadReader.List(
+			ctx, data.Filters{PageSize: 100}, true,
+		)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, metadata)
+		assert.GreaterOrEqual(t, len(listedThreads), 1)
 	})
 
 	t.Run("Update", func(t *testing.T) {
