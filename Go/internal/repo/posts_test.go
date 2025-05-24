@@ -50,6 +50,9 @@ func TestPostRepository(t *testing.T) {
 	})
 
 	t.Run("Read", func(t *testing.T) {
+		p, err := repository.PostReader.Read(ctx, post.ID, true)
+		assert.NoError(t, err)
+		assert.Equal(t, p.ID, post.ID)
 	})
 
 	t.Run("List", func(t *testing.T) {
