@@ -27,14 +27,14 @@ func TestThreadRepository(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	thread := repo.Thread{
-		AuthorID: u.ID,
-		ForumID:  f.ID,
-		Title:    "Johnny Boy",
-	}
+	var thread repo.Thread
 
 	t.Run("Create", func(t *testing.T) {
-		createdThread, err := repository.ThreadWriter.Create(ctx, thread)
+		createdThread, err := repository.ThreadWriter.Create(ctx, repo.ThreadInput{
+			AuthorID: u.ID,
+			ForumID:  f.ID,
+			Title:    "Johnny Boy",
+		})
 		assert.NoError(t, err)
 
 		thread = *createdThread

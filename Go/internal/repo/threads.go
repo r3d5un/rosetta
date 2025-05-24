@@ -71,18 +71,20 @@ func newThreadFromRow(row data.Thread) *Thread {
 	}
 }
 
-func (f *Thread) Row() data.Thread {
-	return data.Thread{
-		ID:        f.ID,
-		ForumID:   f.ForumID,
-		Title:     f.Title,
-		AuthorID:  f.AuthorID,
-		CreatedAt: f.CreatedAt,
-		UpdatedAt: f.UpdatedAt,
-		IsLocked:  f.IsLocked,
-		Deleted:   f.Deleted,
-		DeletedAt: database.NewNullTime(f.DeletedAt),
-		Likes:     f.Likes,
+type ThreadInput struct {
+	// ForumID is the parent forum this thread belongs to.
+	ForumID uuid.UUID `json:"forumId"`
+	// Title is the subject the thread is about.
+	Title string `json:"title"`
+	// AuthorID is the unique identifier of the author of the thread.
+	AuthorID uuid.UUID `json:"authorId"`
+}
+
+func (f *ThreadInput) Row() data.ThreadInput {
+	return data.ThreadInput{
+		ForumID:  f.ForumID,
+		Title:    f.Title,
+		AuthorID: f.AuthorID,
 	}
 }
 
@@ -114,7 +116,7 @@ type ThreadReader interface {
 }
 
 type ThreadWriter interface {
-	Create(context.Context, Thread) (*Thread, error)
+	Create(context.Context, ThreadInput) (*Thread, error)
 	Update(context.Context, ThreadPatch) (*Thread, error)
 	Delete(context.Context, uuid.UUID) (*Thread, error)
 	Restore(context.Context, uuid.UUID) (*Thread, error)
@@ -342,12 +344,12 @@ func (r *ThreadRepository) List(
 	return threads, metadata, nil
 }
 
-func (r *ThreadRepository) Create(ctx context.Context, thread Thread) (*Thread, error) {
+func (r *ThreadRepository) Create(ctx context.Context, input ThreadInput) (*Thread, error) {
 	logger := logging.LoggerFromContext(ctx).
-		With(slog.Group("parameters", slog.Any("thread", thread)))
+		With(slog.Group("parameters", slog.Any("thread", input)))
 
 	logger.LogAttrs(ctx, slog.LevelInfo, "creating thread")
-	row, err := r.models.Threads.Insert(ctx, thread.Row())
+	row, err := r.models.Threads.Insert(ctx, input.Row())
 	if err != nil {
 		logger.LogAttrs(
 			ctx, slog.LevelError, "unable to create thread", slog.String("error", err.Error()),

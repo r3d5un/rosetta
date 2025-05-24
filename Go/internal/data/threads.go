@@ -47,6 +47,15 @@ type Thread struct {
 	Likes int64 `json:"likes"`
 }
 
+type ThreadInput struct {
+	// ForumID is the parent forum this thread belongs to.
+	ForumID uuid.UUID `json:"forumId"`
+	// Title is the subject the thread is about.
+	Title string `json:"title"`
+	// AuthorID is the unique identifier of the author of the thread.
+	AuthorID uuid.UUID `json:"authorId"`
+}
+
 type ThreadPatch struct {
 	// ID is the unique identifier of the thread
 	//
@@ -257,7 +266,7 @@ WHERE ($1::UUID IS NULL OR id = $1::UUID)
 	return &count, nil
 }
 
-func (m *ThreadModel) Insert(ctx context.Context, input Thread) (*Thread, error) {
+func (m *ThreadModel) Insert(ctx context.Context, input ThreadInput) (*Thread, error) {
 	const query string = `
 INSERT INTO forum.threads(forum_id, title, author_id)
 VALUES($1::UUID, $2::VARCHAR(256), $3::UUID)

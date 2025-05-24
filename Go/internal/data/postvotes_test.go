@@ -27,7 +27,7 @@ func TestPostVoteModel(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	insertedThread, err := models.Threads.Insert(ctx, data.Thread{
+	insertedThread, err := models.Threads.Insert(ctx, data.ThreadInput{
 		AuthorID: user.ID,
 		ForumID:  forum.ID,
 		Title:    "Bounty: Adam Smasher",

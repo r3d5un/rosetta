@@ -28,14 +28,14 @@ func TestThreadModel(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	newThread := data.Thread{
-		AuthorID: user.ID,
-		ForumID:  forum.ID,
-		Title:    "Johnny Boy",
-	}
+	var newThread data.Thread
 
 	t.Run("Insert", func(t *testing.T) {
-		insertedThread, err := models.Threads.Insert(ctx, newThread)
+		insertedThread, err := models.Threads.Insert(ctx, data.ThreadInput{
+			AuthorID: user.ID,
+			ForumID:  forum.ID,
+			Title:    "Johnny Boy",
+		})
 		assert.NoError(t, err)
 
 		if insertedThread.ID == uuid.MustParse("00000000-0000-0000-0000-000000000000") {
