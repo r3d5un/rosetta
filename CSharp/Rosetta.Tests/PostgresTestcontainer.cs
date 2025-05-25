@@ -1,11 +1,7 @@
-using DotNet.Testcontainers.Containers;
 using Npgsql;
-using System;
 using System.Data;
 using System.Data.Common;
-using System.Threading.Tasks;
 using Testcontainers.PostgreSql;
-using Xunit;
 
 namespace Rosetta.Tests;
 
