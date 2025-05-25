@@ -14,8 +14,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/justinas/alice"
 	"github.com/r3d5un/rosetta/Go/internal/cfg"
+	"github.com/r3d5un/rosetta/Go/internal/data"
 	"github.com/r3d5un/rosetta/Go/internal/database"
 	"github.com/r3d5un/rosetta/Go/internal/logging"
+	"github.com/r3d5un/rosetta/Go/internal/repo"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
@@ -23,6 +25,8 @@ type API struct {
 	mux    *http.ServeMux
 	logger slog.Logger
 	db     *pgxpool.Pool
+	models *data.Models
+	repo   repo.Repository
 }
 
 func NewAPI(ctx context.Context, config cfg.AppCfg) (*API, error) {
@@ -34,10 +38,19 @@ func NewAPI(ctx context.Context, config cfg.AppCfg) (*API, error) {
 		return nil, err
 	}
 
+	logger.LogAttrs(ctx, slog.LevelInfo, "creating data models")
+	timeout := time.Duration(5) * time.Second
+	models := data.NewModels(db, &timeout)
+
+	logger.LogAttrs(ctx, slog.LevelInfo, "creating resource repository")
+	repo := repo.NewRepository(&models)
+
 	return &API{
 		mux:    http.NewServeMux(),
 		logger: *slog.Default(),
 		db:     db,
+		models: &models,
+		repo:   repo,
 	}, nil
 }
 
@@ -99,6 +112,8 @@ func (api *API) routes() http.Handler {
 		{"GET /debug/pprof/", http.DefaultServeMux.ServeHTTP},
 		{"GET /debug/pprof/profile", http.DefaultServeMux.ServeHTTP},
 		{"GET /debug/pprof/heap", http.DefaultServeMux.ServeHTTP},
+		// user
+		{"GET /api/v1/user/{id}", api.getUserHandler},
 	}
 
 	api.logger.Info("registering endpoints")
