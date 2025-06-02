@@ -115,6 +115,8 @@ func (api *API) routes() http.Handler {
 		// user
 		{"GET /api/v1/user", api.listUserHandler},
 		{"GET /api/v1/user/{id}", api.getUserHandler},
+		// forum
+		{"GET /api/v1/forum/{id}", api.getForumHandler},
 	}
 
 	api.logger.Info("registering endpoints")
