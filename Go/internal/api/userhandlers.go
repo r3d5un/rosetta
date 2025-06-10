@@ -109,6 +109,8 @@ func (api *API) postUserHandler(w http.ResponseWriter, r *http.Request) {
 			rest.ConstraintViolationResponse(w, r, err, "user ID already exists")
 		case errors.Is(err, data.ErrCheckConstraintViolation):
 			rest.ConstraintViolationResponse(w, r, err, "used failed input checks")
+		case errors.Is(err, context.DeadlineExceeded):
+			rest.TimeoutResponse(ctx, w, r)
 		default:
 			rest.ServerErrorResponse(w, r, err)
 		}
@@ -136,6 +138,8 @@ func (api *API) patchUserHandler(w http.ResponseWriter, r *http.Request) {
 			rest.ConstraintViolationResponse(w, r, err, "user ID already exists")
 		case errors.Is(err, data.ErrCheckConstraintViolation):
 			rest.ConstraintViolationResponse(w, r, err, "used failed input checks")
+		case errors.Is(err, context.DeadlineExceeded):
+			rest.TimeoutResponse(ctx, w, r)
 		default:
 			rest.ServerErrorResponse(w, r, err)
 		}
