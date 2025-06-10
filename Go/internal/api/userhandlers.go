@@ -117,3 +117,30 @@ func (api *API) postUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	rest.RespondWithJSON(w, r, http.StatusOK, UserReponse{Data: *user}, nil)
 }
+
+func (api *API) patchUserHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var input repo.UserPatch
+
+	err := rest.ReadJSON(r, &input)
+	if err != nil {
+		rest.BadRequestResponse(w, r, err, "unable to parse JSON request body")
+		return
+	}
+
+	user, err := api.repo.UserWriter.Update(ctx, input)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrUniqueConstraintViolation):
+			rest.ConstraintViolationResponse(w, r, err, "user ID already exists")
+		case errors.Is(err, data.ErrCheckConstraintViolation):
+			rest.ConstraintViolationResponse(w, r, err, "used failed input checks")
+		default:
+			rest.ServerErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	rest.RespondWithJSON(w, r, http.StatusOK, UserReponse{Data: *user}, nil)
+}
