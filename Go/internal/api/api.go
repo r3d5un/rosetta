@@ -113,6 +113,7 @@ func (api *API) routes() http.Handler {
 		{"GET /debug/pprof/profile", http.DefaultServeMux.ServeHTTP},
 		{"GET /debug/pprof/heap", http.DefaultServeMux.ServeHTTP},
 		// user
+		{"POST /api/v1/user", api.postUserHandler},
 		{"GET /api/v1/user", api.listUserHandler},
 		{"GET /api/v1/user/{id}", api.getUserHandler},
 		// forum
