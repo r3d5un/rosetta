@@ -95,6 +95,24 @@ func ValidationFailedResponse(
 	)
 }
 
+func BadRequestResponse(w http.ResponseWriter, r *http.Request, err error, msg string) {
+	logger := logging.LoggerFromContext(r.Context())
+
+	logger.Info("bad request", slog.String("error", err.Error()), slog.String("message", msg))
+	ErrorResponse(w, r, http.StatusBadRequest, msg)
+}
+
+func ConstraintViolationResponse(w http.ResponseWriter, r *http.Request, err error, msg string) {
+	logger := logging.LoggerFromContext(r.Context())
+
+	logger.Info(
+		"a constraint violation occurred",
+		slog.String("error", err.Error()),
+		slog.String("message", msg),
+	)
+	ErrorResponse(w, r, http.StatusConflict, msg)
+}
+
 func RespondWithJSON(
 	w http.ResponseWriter,
 	r *http.Request,
