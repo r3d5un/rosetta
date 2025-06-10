@@ -24,7 +24,7 @@ func (api *API) getThreadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	qs := r.URL.Query()
-	include := rest.ReadQueryBoolean(qs, "include", false)
+	include := rest.ReadRequiredQueryBoolean(qs, "include", false)
 
 	forum, err := api.repo.ThreadReader.Read(ctx, *id, include)
 	if err != nil {

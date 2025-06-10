@@ -31,7 +31,7 @@ func (api *API) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	qs := r.URL.Query()
-	include := rest.ReadQueryBoolean(qs, "include", false)
+	include := rest.ReadRequiredQueryBoolean(qs, "include", false)
 
 	user, err := api.repo.UserReader.Read(ctx, *id, include)
 	if err != nil {

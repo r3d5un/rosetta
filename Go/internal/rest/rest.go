@@ -133,7 +133,7 @@ func ReadPathParamID(ctx context.Context, key string, r *http.Request) (*uuid.UU
 	return &id, err
 }
 
-func ReadQueryBoolean(
+func ReadRequiredQueryBoolean(
 	qs url.Values,
 	key string,
 	defaultValue bool,
