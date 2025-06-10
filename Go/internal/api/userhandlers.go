@@ -3,13 +3,12 @@ package api
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"net/http"
 
 	"github.com/r3d5un/rosetta/Go/internal/data"
-	"github.com/r3d5un/rosetta/Go/internal/logging"
 	"github.com/r3d5un/rosetta/Go/internal/repo"
 	"github.com/r3d5un/rosetta/Go/internal/rest"
+	"github.com/r3d5un/rosetta/Go/internal/validator"
 )
 
 type UserReponse struct {
@@ -51,37 +50,36 @@ func (api *API) getUserHandler(w http.ResponseWriter, r *http.Request) {
 
 func (api *API) listUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger := logging.LoggerFromContext(ctx)
+
+	v := validator.New()
+	qs := r.URL.Query()
 	filters := data.Filters{}
 
-	qs := r.URL.Query()
-	// TODO: ID
-	// TODO: Name
-	// TODO: Username
-	// TODO: email
-	// TODO: created_at_from
-	// TODO: created_at_to
-	// TODO: updated_at_from
-	// TODO: updated_at_to
-	include := rest.ReadQueryBoolean(qs, "include", false)
+	filters.PageSize = rest.ReadRequiredQueryInt(qs, "page_size", 25, v)
+	filters.ID = rest.ReadOptionalQueryUUID(qs, "id", v)
+	filters.Name = rest.ReadOptionalQueryString(qs, "name")
+	filters.Username = rest.ReadOptionalQueryString(qs, "username")
+	filters.Email = rest.ReadOptionalQueryString(qs, "email")
+	filters.CreatedAtFrom = rest.ReadOptionalQueryDate(qs, "created_at_from", v)
+	filters.CreatedAtTo = rest.ReadOptionalQueryDate(qs, "created_at_to", v)
+	filters.UpdatedAtFrom = rest.ReadOptionalQueryDate(qs, "updated_at_from", v)
+	filters.UpdatedAtTo = rest.ReadOptionalQueryDate(qs, "updated_at_to", v)
+	include := rest.ReadRequiredQueryBoolean(qs, "include", false)
 
-	logger.Info(
-		"validating filters",
-		slog.Any("filters", filters),
-		slog.Any("queryParameters", qs),
-	)
-	// TODO: Validate filters
+	if !v.Valid() {
+		rest.ValidationFailedResponse(ctx, w, r, v.Errors)
+		return
+	}
 
 	users, metadata, err := api.repo.UserReader.List(ctx, filters, include)
 	if err != nil {
 		switch {
 		case errors.Is(err, context.DeadlineExceeded):
 			rest.TimeoutResponse(ctx, w, r)
-			return
 		default:
 			rest.ServerErrorResponse(w, r, err)
-			return
 		}
+		return
 	}
 
 	rest.RespondWithJSON(

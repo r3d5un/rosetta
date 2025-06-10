@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/r3d5un/rosetta/Go/internal/logging"
+	"github.com/r3d5un/rosetta/Go/internal/validator"
 )
 
 var (
@@ -75,6 +77,22 @@ func TimeoutResponse(ctx context.Context, w http.ResponseWriter, r *http.Request
 	logger := logging.LoggerFromContext(r.Context())
 	logger.LogAttrs(ctx, slog.LevelInfo, timeoutMsg)
 	ErrorResponse(w, r, http.StatusRequestTimeout, timeoutMsg)
+}
+
+func ValidationFailedResponse(
+	ctx context.Context,
+	w http.ResponseWriter,
+	r *http.Request,
+	validationErrors map[string]string,
+) {
+	logger := logging.LoggerFromContext(r.Context())
+	logger.LogAttrs(ctx, slog.LevelInfo, timeoutMsg, slog.Any("validationErrors", validationErrors))
+	ErrorResponse(
+		w,
+		r,
+		http.StatusUnprocessableEntity,
+		fmt.Sprintf("filter validation failed: %v", validationErrors),
+	)
 }
 
 func RespondWithJSON(
@@ -147,4 +165,67 @@ func ReadRequiredQueryBoolean(
 		return defaultValue
 	}
 	return b
+}
+
+func ReadRequiredQueryInt(qs url.Values, key string, defaultVal int, v *validator.Validator) int {
+	s := qs.Get(key)
+
+	if s == "" {
+		return defaultVal
+	}
+
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		v.AddError(key, "must be an integer value")
+		return defaultVal
+	}
+
+	return i
+}
+
+func ReadOptionalQueryUUID(qs url.Values, key string, v *validator.Validator) *uuid.UUID {
+	s := qs.Get(key)
+
+	if s == "" {
+		return nil
+	}
+
+	id, err := uuid.Parse(s)
+	if err != nil {
+		v.AddError(key, fmt.Sprintf("unable to parse value: %s", err.Error()))
+	}
+
+	return &id
+}
+
+func ReadOptionalQueryString(qs url.Values, key string) *string {
+	s := qs.Get(key)
+
+	if s == "" {
+		return nil
+	}
+
+	return &s
+}
+
+func ReadOptionalQueryDate(qs url.Values, key string, v *validator.Validator) *time.Time {
+	s := qs.Get(key)
+	if s == "" {
+		return nil
+	}
+
+	formats := []string{
+		"2006-01-02",
+		"2006-01-02T15:04:05",
+	}
+
+	for _, format := range formats {
+		if date, err := time.Parse(format, s); err == nil {
+			return &date
+		}
+	}
+
+	v.AddError(key, fmt.Sprintf("not a valid date format, accepting %s", formats))
+
+	return nil
 }
