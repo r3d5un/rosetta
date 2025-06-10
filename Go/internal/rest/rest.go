@@ -247,3 +247,15 @@ func ReadOptionalQueryDate(qs url.Values, key string, v *validator.Validator) *t
 
 	return nil
 }
+
+func ReadJSON(r *http.Request, data any) error {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	err := decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
