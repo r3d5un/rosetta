@@ -31,14 +31,12 @@ func (api *API) getForumHandler(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
 			rest.NotFoundResponse(ctx, w, r)
-			return
 		case errors.Is(err, context.DeadlineExceeded):
 			rest.TimeoutResponse(ctx, w, r)
-			return
 		default:
 			rest.ServerErrorResponse(w, r, err)
-			return
 		}
+		return
 	}
 
 	rest.RespondWithJSON(w, r, http.StatusOK, ForumResponse{Data: *forum}, nil)
