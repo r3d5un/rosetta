@@ -118,7 +118,7 @@ func (api *API) routes() http.Handler {
 		// forum
 		{"GET /api/v1/forum/{id}", api.getForumHandler},
 		// thread
-		{"GET /api/v1/thread/{id}", api.getForumHandler},
+		{"GET /api/v1/thread/{id}", api.getThreadHandler},
 	}
 
 	api.logger.Info("registering endpoints")
