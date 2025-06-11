@@ -201,6 +201,26 @@ func ReadRequiredQueryInt(qs url.Values, key string, defaultVal int, v *validato
 	return i
 }
 
+func ReadRequiredQueryUUID(
+	qs url.Values,
+	key string,
+	v *validator.Validator,
+	defaultVal uuid.UUID,
+) *uuid.UUID {
+	s := qs.Get(key)
+
+	if s == "" {
+		return &defaultVal
+	}
+
+	id, err := uuid.Parse(s)
+	if err != nil {
+		v.AddError(key, fmt.Sprintf("unable to parse value: %s", err.Error()))
+	}
+
+	return &id
+}
+
 func ReadOptionalQueryUUID(qs url.Values, key string, v *validator.Validator) *uuid.UUID {
 	s := qs.Get(key)
 

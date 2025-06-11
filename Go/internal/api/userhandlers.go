@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/r3d5un/rosetta/Go/internal/data"
 	"github.com/r3d5un/rosetta/Go/internal/repo"
 	"github.com/r3d5un/rosetta/Go/internal/rest"
@@ -64,6 +65,7 @@ func (api *API) listUserHandler(w http.ResponseWriter, r *http.Request) {
 	filters.CreatedAtTo = rest.ReadOptionalQueryDate(qs, "created_at_to", v)
 	filters.UpdatedAtFrom = rest.ReadOptionalQueryDate(qs, "updated_at_from", v)
 	filters.UpdatedAtTo = rest.ReadOptionalQueryDate(qs, "updated_at_to", v)
+	filters.LastSeen = *rest.ReadRequiredQueryUUID(qs, "deleted_at_to", v, uuid.MustParse("00000000-0000-0000-0000-000000000000"))
 	include := rest.ReadRequiredQueryBoolean(qs, "include", false)
 
 	if !v.Valid() {
