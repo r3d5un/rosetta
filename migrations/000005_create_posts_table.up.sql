@@ -13,3 +13,4 @@ CREATE TABLE IF NOT EXISTS forum.posts
     CONSTRAINT fk_author_id FOREIGN KEY (author_id) REFERENCES forum.users (id),
     CONSTRAINT srfk_replies_post_id FOREIGN KEY (reply_to) REFERENCES forum.posts (id)
 );
+

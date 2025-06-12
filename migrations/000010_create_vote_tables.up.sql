@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS forum.post_votes
 CREATE TABLE IF NOT EXISTS forum.thread_votes
 (
     thread_id UUID     NOT NULL,
-    user_id UUID     NOT NULL,
-    vote    SMALLINT NOT NULL DEFAULT 0,
+    user_id   UUID     NOT NULL,
+    vote      SMALLINT NOT NULL DEFAULT 0,
     CONSTRAINT pk_thread_votes PRIMARY KEY (thread_id, user_id),
     CONSTRAINT fk_thread_id FOREIGN KEY (thread_id) REFERENCES forum.threads (id) ON DELETE CASCADE,
     CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES forum.users (id) ON DELETE CASCADE,
@@ -21,4 +21,5 @@ CREATE TABLE IF NOT EXISTS forum.thread_votes
 );
 
 ALTER TABLE forum.threads
-ADD COLUMN likes BIGINT DEFAULT 0 NOT NULL;
+    ADD COLUMN likes BIGINT DEFAULT 0 NOT NULL;
+

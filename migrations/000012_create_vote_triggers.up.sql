@@ -41,3 +41,4 @@ CREATE TRIGGER trigger_thread_vote_sum_on_delete
     ON forum.thread_votes
     FOR EACH ROW
 EXECUTE FUNCTION update_thread_likes();
+

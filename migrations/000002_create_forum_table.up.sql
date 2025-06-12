@@ -7,3 +7,4 @@ CREATE TABLE IF NOT EXISTS forum.forums
     updated_at  TIMESTAMP DEFAULT NOW() NOT NULL,
     CONSTRAINT pk_forums PRIMARY KEY (id)
 );
+

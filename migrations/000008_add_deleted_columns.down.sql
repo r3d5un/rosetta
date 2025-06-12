@@ -13,3 +13,4 @@ ALTER TABLE forum.threads
 ALTER TABLE forum.posts
     DROP COLUMN IF EXISTS deleted,
     DROP COLUMN IF EXISTS deleted_at;
+

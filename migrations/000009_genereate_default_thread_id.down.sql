@@ -1,2 +1,3 @@
 ALTER TABLE forum.threads
     ALTER COLUMN id DROP DEFAULT;
+
