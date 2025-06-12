@@ -189,6 +189,8 @@ LIMIT $1::INTEGER
 	var metadata Metadata
 	if length > 0 {
 		metadata.LastSeen = users[length-1].ID
+	}
+	if length >= filters.PageSize {
 		metadata.Next = true
 	}
 	metadata.ResponseLength = length
