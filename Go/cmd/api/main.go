@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/r3d5un/rosetta/Go/internal/api"
 	"github.com/r3d5un/rosetta/Go/internal/cfg"
@@ -31,14 +32,25 @@ func run() error {
 		return err
 	}
 
-	shutdownTelemetry, err := telemetry.SetupTelemetry(ctx, config.Telemetry)
-	if err != nil {
-		return err
+	switch config.TelemetryEnabled {
+	case false:
+		jsonLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+		logger := jsonLogger.With(slog.Group(
+			"applicationInstance",
+			slog.String("instanceId", uuid.New().String())),
+		)
+		slog.SetDefault(logger)
+	default:
+		shutdownTelemetry, err := telemetry.SetupTelemetry(ctx, config.Telemetry)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			err = errors.Join(err, shutdownTelemetry(ctx))
+		}()
 	}
-	defer func() {
-		err = errors.Join(err, shutdownTelemetry(context.Background()))
-	}()
 	logger := slog.Default()
+
 	logger.Info("starting application", slog.Any("config", config))
 
 	logger.Info("instantiating API")

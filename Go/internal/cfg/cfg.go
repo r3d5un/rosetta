@@ -12,12 +12,13 @@ import (
 )
 
 type AppCfg struct {
-	Name        string                    `json:"name"`
-	Version     string                    `json:"version"`
-	Environemnt string                    `json:"environment"`
-	Server      ServerCfg                 `json:"server"`
-	Telemetry   telemetry.TelemetryConfig `json:"telemetry"`
-	Database    database.DatabaseConfig   `json:"database"`
+	Name             string                    `json:"name"`
+	Version          string                    `json:"version"`
+	Environemnt      string                    `json:"environment"`
+	Server           ServerCfg                 `json:"server"`
+	TelemetryEnabled bool                      `json:"telemetryEnabled"`
+	Telemetry        telemetry.TelemetryConfig `json:"telemetry"`
+	Database         database.DatabaseConfig   `json:"database"`
 }
 
 type ServerCfg struct {
