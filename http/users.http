@@ -1,0 +1,35 @@
+### CREATE_USER
+POST localhost:4000/api/v1/user
+Accept: "application/json"
+Content-Type: application/json
+
+{
+	"name": "Johnny Silverhand",
+	"username": "silverhand",
+	"email": "silverhand@samurai.nc"
+}
+
+###
+
+### LIST_USERS
+GET localhost:4000/api/v1/user
+Accept: "application/json"
+Content-Type: application/json
+
+###
+
+### GET_USER
+GET localhost:4000/api/v1/user/79783d28-c42f-47a8-8efb-58876c3dec3d
+Accept: "application/json"
+Content-Type: application/json
+
+### DELETE_USER
+DELETE localhost:4000/api/v1/user/2d755a7d-c576-41a8-9ad5-ee9ee2fc6de4
+Accept: "application/json"
+Content-Type: application/json
+
+### PERMANENTLY_DELETE_USER
+DELETE localhost:4000/api/v1/admin/user/2d755a7d-c576-41a8-9ad5-ee9ee2fc6de4
+Accept: "application/json"
+Content-Type: application/json
+
