@@ -1,5 +1,9 @@
+@hostname=localhost
+@port=4000
+@host={{hostname}}:{{port}}
+
 ### CREATE_USER
-POST localhost:4000/api/v1/user
+POST {{API_URL}}/api/v1/user
 Accept: "application/json"
 Content-Type: application/json
 
@@ -12,24 +16,47 @@ Content-Type: application/json
 ###
 
 ### LIST_USERS
-GET localhost:4000/api/v1/user
+GET {{API_URL}}/api/v1/user
 Accept: "application/json"
 Content-Type: application/json
 
 ###
 
 ### GET_USER
-GET localhost:4000/api/v1/user/79783d28-c42f-47a8-8efb-58876c3dec3d
+GET {{API_URL}}/api/v1/user/79783d28-c42f-47a8-8efb-58876c3dec3d
 Accept: "application/json"
 Content-Type: application/json
+
+###
+
+### PATCH_USER
+PATCH {{API_URL}}/api/v1/user
+Accept: "application/json"
+Content-Type: application/json
+
+{
+	"id": "{{LIST_USERS.response.body.$.data[0].id}}",
+	"username": "silverhand"
+}
+
+###
 
 ### DELETE_USER
-DELETE localhost:4000/api/v1/user/2d755a7d-c576-41a8-9ad5-ee9ee2fc6de4
+DELETE {{API_URL}}/api/v1/user/79783d28-c42f-47a8-8efb-58876c3dec3d/delete
 Accept: "application/json"
 Content-Type: application/json
 
+###
+
+### RESTORE_USER
+POST {{API_URL}}/api/v1/user/79783d28-c42f-47a8-8efb-58876c3dec3d/restore
+Accept: "application/json"
+Content-Type: application/json
+
+###
+
 ### PERMANENTLY_DELETE_USER
-DELETE localhost:4000/api/v1/admin/user/2d755a7d-c576-41a8-9ad5-ee9ee2fc6de4
+DELETE {{API_URL}}/api/v1/admin/user/79783d28-c42f-47a8-8efb-58876c3dec3d/purge
 Accept: "application/json"
 Content-Type: application/json
 

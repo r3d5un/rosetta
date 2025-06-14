@@ -115,8 +115,9 @@ func (api *API) routes() http.Handler {
 		// user
 		{"POST /api/v1/user", api.postUserHandler},
 		{"PATCH /api/v1/user", api.patchUserHandler},
-		{"DELETE /api/v1/user/{id}", api.deleteUserHandler},
-		{"DELETE /api/v1/admin/user/{id}", api.deletePermanentlyUserHandler},
+		{"DELETE /api/v1/user/{id}/delete", api.deleteUserHandler},
+		{"POST /api/v1/user/{id}/restore", api.restoreUserHandler},
+		{"DELETE /api/v1/user/{id}/purge", api.deletePermanentlyUserHandler},
 		{"GET /api/v1/user", api.listUserHandler},
 		{"GET /api/v1/user/{id}", api.getUserHandler},
 		// forum

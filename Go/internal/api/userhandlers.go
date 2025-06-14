@@ -178,6 +178,31 @@ func (api *API) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	rest.RespondWithJSON(w, r, http.StatusOK, UserReponse{Data: *user}, nil)
 }
 
+func (api *API) restoreUserHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	id, err := rest.ReadPathParamID(ctx, "id", r)
+	if err != nil {
+		rest.InvalidParameterResponse(ctx, w, r, "id", err)
+		return
+	}
+
+	user, err := api.repo.UserWriter.Restore(ctx, *id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			rest.NotFoundResponse(ctx, w, r)
+		case errors.Is(err, context.DeadlineExceeded):
+			rest.TimeoutResponse(ctx, w, r)
+		default:
+			rest.ServerErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	rest.RespondWithJSON(w, r, http.StatusOK, UserReponse{Data: *user}, nil)
+}
+
 func (api *API) deletePermanentlyUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
