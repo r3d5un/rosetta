@@ -47,3 +47,10 @@ DELETE {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/delete
 Accept: "application/json"
 Content-Type: application/json
 
+###
+
+### RESTORE_FORUM
+POST {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/restore
+Accept: "application/json"
+Content-Type: application/json
+
