@@ -123,6 +123,7 @@ func (api *API) routes() http.Handler {
 		// forum
 		{"POST /api/v1/forum", api.postForumHandler},
 		{"PATCH /api/v1/forum", api.patchForumHandler},
+		{"DELETE /api/v1/forum/{id}/delete", api.deleteForumHandler},
 		{"GET /api/v1/forum", api.listForumHandler},
 		{"GET /api/v1/forum/{id}", api.getForumHandler},
 		// thread
