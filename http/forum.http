@@ -1,0 +1,29 @@
+### LIST_USERS
+GET {{API_URL}}/api/v1/user
+Accept: "application/json"
+Content-Type: application/json
+
+###
+
+### CREATE_FORUM
+POST {{API_URL}}/api/v1/forum
+Accept: "application/json"
+Content-Type: application/json
+
+{
+	"ownerId": "{{LIST_USERS.response.body.$.data[0].id}}",
+	"name": "Night City",
+	"description": "Night City is the place of dreams."
+}
+
+### LIST_FORUMS
+GET {{API_URL}}/api/v1/forum
+Accept: "application/json"
+Content-Type: application/json
+
+###
+
+### GET_FORUM
+GET {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4
+Accept: "application/json"
+Content-Type: application/json
