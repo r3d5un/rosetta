@@ -110,7 +110,36 @@ func (api *API) postForumHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrUniqueConstraintViolation):
-			rest.ConstraintViolationResponse(w, r, err, "user ID already exists")
+			rest.ConstraintViolationResponse(w, r, err, "forum ID already exists")
+		case errors.Is(err, data.ErrCheckConstraintViolation):
+			rest.ConstraintViolationResponse(w, r, err, "used failed input checks")
+		case errors.Is(err, context.DeadlineExceeded):
+			rest.TimeoutResponse(ctx, w, r)
+		default:
+			rest.ServerErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	rest.RespondWithJSON(w, r, http.StatusOK, ForumResponse{Data: *forum}, nil)
+}
+
+func (api *API) patchForumHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var input repo.ForumPatch
+
+	err := rest.ReadJSON(r, &input)
+	if err != nil {
+		rest.BadRequestResponse(w, r, err, "unable to parse JSON request body")
+		return
+	}
+
+	forum, err := api.repo.ForumWriter.Update(ctx, input)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrUniqueConstraintViolation):
+			rest.ConstraintViolationResponse(w, r, err, "forum ID already exists")
 		case errors.Is(err, data.ErrCheckConstraintViolation):
 			rest.ConstraintViolationResponse(w, r, err, "used failed input checks")
 		case errors.Is(err, context.DeadlineExceeded):
