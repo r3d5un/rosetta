@@ -1,0 +1,32 @@
+### LIST_FORUMS
+GET {{API_URL}}/api/v1/forum
+Accept: "application/json"
+Content-Type: application/json
+
+###
+
+### CREATE_THREAD
+POST {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/thread
+Accept: "application/json"
+Content-Type: application/json
+
+{
+	"forumId": "85cf156c-5c30-49ba-9ba0-ea47f05ddcc4",
+	"title": "Cyberpsycho sighted",
+	"authorId": "79783d28-c42f-47a8-8efb-58876c3dec3d"
+}
+
+###
+
+### GET_THREAD
+GET {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/thread/f5b5d836-7660-4d9d-88b1-86144476c4e8
+Accept: "application/json"
+Content-Type: application/json
+
+###
+
+### LIST_THREAD
+GET {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/thread
+Accept: "application/json"
+Content-Type: application/json
+
