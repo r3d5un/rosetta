@@ -102,8 +102,8 @@ func (p *PostPatch) Row() data.PostPatch {
 }
 
 type PostReader interface {
-	Read(context.Context, uuid.UUID, bool) (*Post, error)
-	List(context.Context, data.Filters, bool) ([]*Post, *data.Metadata, error)
+	Read(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, bool) (*Post, error)
+	List(context.Context, uuid.UUID, uuid.UUID, data.Filters, bool) ([]*Post, *data.Metadata, error)
 }
 
 type PostWriter interface {
@@ -132,12 +132,21 @@ func NewPostRepository(
 	}
 }
 
-func (r *PostRepository) Read(ctx context.Context, id uuid.UUID, include bool) (*Post, error) {
-	logger := logging.LoggerFromContext(ctx).
-		With(slog.Group("parameters", slog.String("id", id.String()), slog.Bool("include", include)))
+func (r *PostRepository) Read(
+	ctx context.Context,
+	forumID uuid.UUID,
+	threadID uuid.UUID,
+	postID uuid.UUID,
+	include bool,
+) (*Post, error) {
+	logger := logging.LoggerFromContext(ctx).With(slog.Group(
+		"parameters",
+		slog.String("id", postID.String()),
+		slog.Bool("include", include)),
+	)
 
 	logger.LogAttrs(ctx, slog.LevelInfo, "retrieving post")
-	row, err := r.models.Posts.Select(ctx, id)
+	row, err := r.models.Posts.Select(ctx, threadID, postID)
 	if err != nil {
 		logger.LogAttrs(
 			ctx, slog.LevelError, "unable to select post", slog.String("error", err.Error()),
@@ -172,7 +181,7 @@ func (r *PostRepository) Read(ctx context.Context, id uuid.UUID, include bool) (
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		thread, err := r.threadReader.Read(ctx, post.ThreadID, true)
+		thread, err := r.threadReader.Read(ctx, forumID, threadID, true)
 		if err != nil {
 			errCh <- err
 			return
@@ -214,11 +223,19 @@ func (r *PostRepository) Read(ctx context.Context, id uuid.UUID, include bool) (
 
 func (r *PostRepository) List(
 	ctx context.Context,
+	forumID uuid.UUID,
+	threadID uuid.UUID,
 	filter data.Filters,
 	include bool,
 ) ([]*Post, *data.Metadata, error) {
 	logger := logging.LoggerFromContext(ctx).
-		With(slog.Group("parameters", slog.Any("filters", filter), slog.Bool("include", include)))
+		With(slog.Group(
+			"parameters",
+			slog.String("forumId", forumID.String()),
+			slog.String("threadId", threadID.String()),
+			slog.Any("filters", filter),
+			slog.Bool("include", include)),
+		)
 
 	logger.LogAttrs(ctx, slog.LevelInfo, "retrieving posts")
 	rows, metadata, err := r.models.Posts.SelectAll(ctx, filter)
@@ -263,7 +280,8 @@ func (r *PostRepository) List(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			thread, err := r.threadReader.Read(ctx, posts[i].ThreadID, true)
+
+			thread, err := r.threadReader.Read(ctx, forumID, threadID, true)
 			if err != nil {
 				errCh <- err
 				return

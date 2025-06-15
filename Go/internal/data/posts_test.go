@@ -50,7 +50,7 @@ func TestPostModel(t *testing.T) {
 	})
 
 	t.Run("Select", func(t *testing.T) {
-		selectedPost, err := models.Posts.Select(ctx, post.ID)
+		selectedPost, err := models.Posts.Select(ctx, insertedThread.ID, post.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, post, *selectedPost)
 	})

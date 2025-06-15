@@ -48,14 +48,14 @@ func TestPostRepository(t *testing.T) {
 	})
 
 	t.Run("Read", func(t *testing.T) {
-		p, err := repository.PostReader.Read(ctx, post.ID, true)
+		p, err := repository.PostReader.Read(ctx, f.ID, thread.ID, post.ID, true)
 		assert.NoError(t, err)
 		assert.Equal(t, p.ID, post.ID)
 	})
 
 	t.Run("List", func(t *testing.T) {
 		posts, metadata, err := repository.PostReader.List(
-			ctx, data.Filters{PageSize: 100}, true,
+			ctx, f.ID, thread.ID, data.Filters{PageSize: 100}, true,
 		)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, metadata)

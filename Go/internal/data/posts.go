@@ -70,7 +70,7 @@ type PostModel struct {
 	Timeout *time.Duration
 }
 
-func (m *PostModel) Select(ctx context.Context, id uuid.UUID) (*Post, error) {
+func (m *PostModel) Select(ctx context.Context, threadID uuid.UUID, id uuid.UUID) (*Post, error) {
 	const query string = `
 SELECT id,
        thread_id,
@@ -83,7 +83,8 @@ SELECT id,
        deleted,
        deleted_at
 FROM forum.posts
-WHERE id = $1::UUID;
+WHERE id = $1::UUID
+  AND thread_id = $2::UUID;
 `
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
@@ -102,6 +103,7 @@ WHERE id = $1::UUID;
 		ctx,
 		query,
 		id,
+		threadID,
 	).Scan(
 		&p.ID,
 		&p.ThreadID,
