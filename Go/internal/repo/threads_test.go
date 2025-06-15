@@ -41,7 +41,7 @@ func TestThreadRepository(t *testing.T) {
 	})
 
 	t.Run("Read", func(t *testing.T) {
-		readThread, err := repository.ThreadReader.Read(ctx, thread.ID, true)
+		readThread, err := repository.ThreadReader.Read(ctx, thread.ForumID, thread.ID, true)
 		assert.NoError(t, err)
 		assert.Equal(t, readThread.ID, thread.ID)
 	})

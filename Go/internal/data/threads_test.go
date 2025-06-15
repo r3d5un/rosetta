@@ -47,7 +47,7 @@ func TestThreadModel(t *testing.T) {
 	})
 
 	t.Run("Select", func(t *testing.T) {
-		f, err := models.Threads.Select(ctx, newThread.ID)
+		f, err := models.Threads.Select(ctx, forum.ID, newThread.ID)
 		assert.NoError(t, err)
 		if !assert.Equal(t, newThread, *f) {
 			t.Error("inserted and selected thread do not match")

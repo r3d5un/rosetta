@@ -75,17 +75,23 @@ type ThreadModel struct {
 	Timeout *time.Duration
 }
 
-func (m *ThreadModel) Select(ctx context.Context, id uuid.UUID) (*Thread, error) {
+func (m *ThreadModel) Select(
+	ctx context.Context,
+	forumID uuid.UUID,
+	threadID uuid.UUID,
+) (*Thread, error) {
 	const query string = `
 SELECT id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at, likes
 FROM forum.threads
-WHERE id = $1::UUID;
+WHERE id = $1::UUID
+  AND forum_id = $2::UUID;
 `
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
 		slog.String("query", logging.MinifySQL(query)),
-		slog.Any("id", id),
+		slog.Any("forumId", forumID),
+		slog.Any("threadId", threadID),
 		slog.Duration("timeout", *m.Timeout),
 	))
 
@@ -97,7 +103,8 @@ WHERE id = $1::UUID;
 	err := m.DB.QueryRow(
 		ctx,
 		query,
-		id,
+		threadID,
+		forumID,
 	).Scan(
 		&t.ID,
 		&t.ForumID,

@@ -111,7 +111,7 @@ func (f *ThreadPatch) Row() data.ThreadPatch {
 }
 
 type ThreadReader interface {
-	Read(context.Context, uuid.UUID, bool) (*Thread, error)
+	Read(context.Context, uuid.UUID, uuid.UUID, bool) (*Thread, error)
 	List(context.Context, data.Filters, bool) ([]*Thread, *data.Metadata, error)
 }
 
@@ -141,12 +141,21 @@ func NewThreadRepository(
 	}
 }
 
-func (r *ThreadRepository) Read(ctx context.Context, id uuid.UUID, include bool) (*Thread, error) {
+func (r *ThreadRepository) Read(
+	ctx context.Context,
+	forumID uuid.UUID,
+	threadID uuid.UUID,
+	include bool,
+) (*Thread, error) {
 	logger := logging.LoggerFromContext(ctx).
-		With(slog.Group("parameters", slog.String("id", id.String()), slog.Bool("include", include)))
+		With(slog.Group(
+			"parameters",
+			slog.String("forumId", forumID.String()),
+			slog.String("threadId", threadID.String()),
+			slog.Bool("include", include)))
 
 	logger.LogAttrs(ctx, slog.LevelInfo, "retrieving thread")
-	row, err := r.models.Threads.Select(ctx, id)
+	row, err := r.models.Threads.Select(ctx, forumID, threadID)
 	if err != nil {
 		logger.LogAttrs(
 			ctx, slog.LevelError, "unable to select thread", slog.String("error", err.Error()),

@@ -17,16 +17,22 @@ type ThreadResponse struct {
 func (api *API) getThreadHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	id, err := rest.ReadPathParamID(ctx, "id", r)
+	forumID, err := rest.ReadPathParamID(ctx, "forum_id", r)
 	if err != nil {
-		rest.InvalidParameterResponse(ctx, w, r, "id", err)
+		rest.InvalidParameterResponse(ctx, w, r, "forum_id", err)
+		return
+	}
+
+	threadID, err := rest.ReadPathParamID(ctx, "thread_id", r)
+	if err != nil {
+		rest.InvalidParameterResponse(ctx, w, r, "thread_id", err)
 		return
 	}
 
 	qs := r.URL.Query()
 	include := rest.ReadRequiredQueryBoolean(qs, "include", false)
 
-	forum, err := api.repo.ThreadReader.Read(ctx, *id, include)
+	forum, err := api.repo.ThreadReader.Read(ctx, *forumID, *threadID, include)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
