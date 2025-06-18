@@ -63,7 +63,7 @@ type ThreadPatch struct {
 	// setting the value upon insertion.
 	ID uuid.UUID `json:"id"`
 	// ForumID is the parent forum this thread belongs to.
-	ForumID uuid.NullUUID `json:"forumId"`
+	ForumID uuid.UUID `json:"forumId"`
 	// Title is the subject the thread is about.
 	Title sql.NullString `json:"title"`
 	// AuthorID is the unique identifier of the author of the thread.
@@ -323,10 +323,10 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 func (m *ThreadModel) Update(ctx context.Context, input ThreadPatch) (*Thread, error) {
 	const query string = `
 UPDATE forum.threads
-SET forum_id = COALESCE($2::UUID, forum_id),
-    title = COALESCE($3::VARCHAR(256), title),
+SET title = COALESCE($3::VARCHAR(256), title),
     author_id = COALESCE($4::UUID, author_id)
 WHERE id = $1::UUID
+  AND forum_id = $2::UUID
 RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at, likes;
 `
 

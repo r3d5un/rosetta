@@ -94,7 +94,7 @@ type ThreadPatch struct {
 	// Upon creating a new thread, any existing values in this field is ignored.
 	ID uuid.UUID `json:"id"`
 	// ForumID is the parent forum this thread belongs to.
-	ForumID *uuid.UUID `json:"forumId"`
+	ForumID uuid.UUID `json:"forumId"`
 	// Title is the subject the thread is about.
 	Title *string `json:"title"`
 	// AuthorID is the unique identifier of the author of the thread.
@@ -104,7 +104,7 @@ type ThreadPatch struct {
 func (f *ThreadPatch) Row() data.ThreadPatch {
 	return data.ThreadPatch{
 		ID:       f.ID,
-		ForumID:  database.NewNullUUID(f.ForumID),
+		ForumID:  f.ForumID,
 		Title:    database.NewNullString(f.Title),
 		AuthorID: database.NewNullUUID(f.AuthorID),
 	}

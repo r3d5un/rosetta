@@ -149,19 +149,20 @@ func (api *API) postThreadHandler(w http.ResponseWriter, r *http.Request) {
 func (api *API) patchThreadHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var input repo.ThreadPatch
-
-	err := rest.ReadJSON(r, &input)
-	if err != nil {
-		rest.BadRequestResponse(w, r, err, "unable to parse JSON request body")
-		return
-	}
-
-	input.ForumID, err = rest.ReadPathParamID(ctx, "forum_id", r)
+	forumID, err := rest.ReadPathParamID(ctx, "forum_id", r)
 	if err != nil {
 		rest.InvalidParameterResponse(ctx, w, r, "forum_id", err)
 		return
 	}
+
+	var input repo.ThreadPatch
+
+	err = rest.ReadJSON(r, &input)
+	if err != nil {
+		rest.BadRequestResponse(w, r, err, "unable to parse JSON request body")
+		return
+	}
+	input.ForumID = *forumID
 
 	thread, err := api.repo.ThreadWriter.Update(ctx, input)
 	if err != nil {
