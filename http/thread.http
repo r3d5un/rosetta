@@ -30,3 +30,15 @@ GET {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/thread
 Accept: "application/json"
 Content-Type: application/json
 
+
+###
+
+### PATCH_THREAD
+PATCH {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/thread
+Accept: "application/json"
+Content-Type: application/json
+
+{
+	"id": "f5b5d836-7660-4d9d-88b1-86144476c4e8",
+	"title": "Cyberpsycho sighted"
+}

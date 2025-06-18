@@ -130,6 +130,7 @@ func (api *API) routes() http.Handler {
 		{"GET /api/v1/forum/{id}", api.getForumHandler},
 		// thread
 		{"POST /api/v1/forum/{forum_id}/thread", api.postThreadHandler},
+		{"PATCH /api/v1/forum/{forum_id}/thread", api.patchThreadHandler},
 		{"GET /api/v1/forum/{forum_id}/thread", api.listThreadHandler},
 		{"GET /api/v1/forum/{forum_id}/thread/{thread_id}", api.getThreadHandler},
 	}

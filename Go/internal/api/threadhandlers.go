@@ -145,3 +145,38 @@ func (api *API) postThreadHandler(w http.ResponseWriter, r *http.Request) {
 
 	rest.RespondWithJSON(w, r, http.StatusOK, ThreadResponse{Data: *forum}, nil)
 }
+
+func (api *API) patchThreadHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var input repo.ThreadPatch
+
+	err := rest.ReadJSON(r, &input)
+	if err != nil {
+		rest.BadRequestResponse(w, r, err, "unable to parse JSON request body")
+		return
+	}
+
+	input.ForumID, err = rest.ReadPathParamID(ctx, "forum_id", r)
+	if err != nil {
+		rest.InvalidParameterResponse(ctx, w, r, "forum_id", err)
+		return
+	}
+
+	thread, err := api.repo.ThreadWriter.Update(ctx, input)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrUniqueConstraintViolation):
+			rest.ConstraintViolationResponse(w, r, err, "forum ID already exists")
+		case errors.Is(err, data.ErrCheckConstraintViolation):
+			rest.ConstraintViolationResponse(w, r, err, "used failed input checks")
+		case errors.Is(err, context.DeadlineExceeded):
+			rest.TimeoutResponse(ctx, w, r)
+		default:
+			rest.ServerErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	rest.RespondWithJSON(w, r, http.StatusOK, ThreadResponse{Data: *thread}, nil)
+}
