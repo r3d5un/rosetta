@@ -118,7 +118,7 @@ type ThreadReader interface {
 type ThreadWriter interface {
 	Create(context.Context, ThreadInput) (*Thread, error)
 	Update(context.Context, ThreadPatch) (*Thread, error)
-	Delete(context.Context, uuid.UUID) (*Thread, error)
+	Delete(context.Context, uuid.UUID, uuid.UUID) (*Thread, error)
 	Restore(context.Context, uuid.UUID) (*Thread, error)
 	PermanentlyDelete(context.Context, uuid.UUID) (*Thread, error)
 }
@@ -386,12 +386,16 @@ func (r *ThreadRepository) Update(ctx context.Context, patch ThreadPatch) (*Thre
 	return newThreadFromRow(*row), nil
 }
 
-func (r *ThreadRepository) Delete(ctx context.Context, id uuid.UUID) (*Thread, error) {
+func (r *ThreadRepository) Delete(
+	ctx context.Context,
+	forumID uuid.UUID,
+	threadID uuid.UUID,
+) (*Thread, error) {
 	logger := logging.LoggerFromContext(ctx).
-		With(slog.Group("parameters", slog.String("id", id.String())))
+		With(slog.Group("parameters", slog.String("forumId", threadID.String()), slog.String("threadId", threadID.String())))
 
 	logger.LogAttrs(ctx, slog.LevelInfo, "deleting thread")
-	row, err := r.models.Threads.SoftDelete(ctx, id)
+	row, err := r.models.Threads.SoftDelete(ctx, forumID, threadID)
 	if err != nil {
 		logger.LogAttrs(
 			ctx, slog.LevelError, "unable to delete thread", slog.String("error", err.Error()),
