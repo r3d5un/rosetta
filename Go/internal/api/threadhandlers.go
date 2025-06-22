@@ -245,3 +245,34 @@ func (api *API) restoreThreadHandler(w http.ResponseWriter, r *http.Request) {
 
 	rest.RespondWithJSON(w, r, http.StatusOK, ThreadResponse{Data: *thread}, nil)
 }
+
+func (api *API) deletePermanentlyThreadHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	forumID, err := rest.ReadPathParamID(ctx, "forum_id", r)
+	if err != nil {
+		rest.InvalidParameterResponse(ctx, w, r, "forum_id", err)
+		return
+	}
+
+	threadID, err := rest.ReadPathParamID(ctx, "thread_id", r)
+	if err != nil {
+		rest.InvalidParameterResponse(ctx, w, r, "thread_id", err)
+		return
+	}
+
+	thread, err := api.repo.ThreadWriter.PermanentlyDelete(ctx, *forumID, *threadID)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			rest.NotFoundResponse(ctx, w, r)
+		case errors.Is(err, context.DeadlineExceeded):
+			rest.TimeoutResponse(ctx, w, r)
+		default:
+			rest.ServerErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	rest.RespondWithJSON(w, r, http.StatusOK, ThreadResponse{Data: *thread}, nil)
+}

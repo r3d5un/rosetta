@@ -102,7 +102,7 @@ func TestThreadModel(t *testing.T) {
 	})
 
 	t.Run("Delete", func(t *testing.T) {
-		deletedThread, err := models.Threads.Delete(ctx, newThread.ID)
+		deletedThread, err := models.Threads.Delete(ctx, forum.ID, newThread.ID)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, deletedThread)
 	})
