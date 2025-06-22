@@ -131,7 +131,8 @@ func (api *API) routes() http.Handler {
 		// thread
 		{"POST /api/v1/forum/{forum_id}/thread", api.postThreadHandler},
 		{"PATCH /api/v1/forum/{forum_id}/thread", api.patchThreadHandler},
-		{"DELETE /api/v1/forum/{forum_id}/thread/{thread_id}", api.deleteThreadHandler},
+		{"DELETE /api/v1/forum/{forum_id}/thread/{thread_id}/delete", api.deleteThreadHandler},
+		{"POST /api/v1/forum/{forum_id}/thread/{thread_id}/restore", api.restoreThreadHandler},
 		{"GET /api/v1/forum/{forum_id}/thread", api.listThreadHandler},
 		{"GET /api/v1/forum/{forum_id}/thread/{thread_id}", api.getThreadHandler},
 	}

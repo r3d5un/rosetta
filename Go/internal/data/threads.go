@@ -422,20 +422,26 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 	return &t, nil
 }
 
-func (m *ThreadModel) Restore(ctx context.Context, id uuid.UUID) (*Thread, error) {
+func (m *ThreadModel) Restore(
+	ctx context.Context,
+	forumID uuid.UUID,
+	threadID uuid.UUID,
+) (*Thread, error) {
 	const query string = `
 UPDATE forum.threads
 SET deleted    = FALSE,
     deleted_at = NULL,
     updated_at = NOW()
 WHERE id = $1::UUID
+  AND forum_id = $2::UUID
 RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, deleted, deleted_at, likes;
 `
 
 	logger := logging.LoggerFromContext(ctx).With(slog.Group(
 		"query",
 		slog.String("query", logging.MinifySQL(query)),
-		slog.String("id", id.String()),
+		slog.String("forumId", forumID.String()),
+		slog.String("threadId", threadID.String()),
 		slog.Duration("timeout", *m.Timeout),
 	))
 
@@ -447,7 +453,8 @@ RETURNING id, forum_id, title, author_id, created_at, updated_at, is_locked, del
 	err := m.DB.QueryRow(
 		ctx,
 		query,
-		id,
+		threadID,
+		forumID,
 	).Scan(
 		&t.ID,
 		&t.ForumID,

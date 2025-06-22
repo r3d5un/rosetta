@@ -119,7 +119,7 @@ type ThreadWriter interface {
 	Create(context.Context, ThreadInput) (*Thread, error)
 	Update(context.Context, ThreadPatch) (*Thread, error)
 	Delete(context.Context, uuid.UUID, uuid.UUID) (*Thread, error)
-	Restore(context.Context, uuid.UUID) (*Thread, error)
+	Restore(context.Context, uuid.UUID, uuid.UUID) (*Thread, error)
 	PermanentlyDelete(context.Context, uuid.UUID) (*Thread, error)
 }
 
@@ -406,12 +406,16 @@ func (r *ThreadRepository) Delete(
 	return newThreadFromRow(*row), nil
 }
 
-func (r *ThreadRepository) Restore(ctx context.Context, id uuid.UUID) (*Thread, error) {
+func (r *ThreadRepository) Restore(
+	ctx context.Context,
+	forumID uuid.UUID,
+	threadID uuid.UUID,
+) (*Thread, error) {
 	logger := logging.LoggerFromContext(ctx).
-		With(slog.Group("parameters", slog.String("id", id.String())))
+		With(slog.Group("parameters", slog.String("forumId", forumID.String()), slog.String("threadId", threadID.String())))
 
 	logger.LogAttrs(ctx, slog.LevelInfo, "restoring thread")
-	row, err := r.models.Threads.Restore(ctx, id)
+	row, err := r.models.Threads.Restore(ctx, forumID, threadID)
 	if err != nil {
 		logger.LogAttrs(
 			ctx, slog.LevelError, "unable to restore thread", slog.String("error", err.Error()),
