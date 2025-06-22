@@ -58,8 +58,9 @@ func TestThreadRepository(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		newTitle := "Neurochipped Johnny Boy"
 		updatedThread, err := repository.ThreadWriter.Update(ctx, repo.ThreadPatch{
-			ID:    thread.ID,
-			Title: &newTitle,
+			ID:      thread.ID,
+			ForumID: f.ID,
+			Title:   &newTitle,
 		})
 		assert.NoError(t, err)
 		assert.NotEqual(t, thread, *updatedThread)
