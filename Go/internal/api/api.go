@@ -139,6 +139,8 @@ func (api *API) routes() http.Handler {
 		{"POST /api/v1/forum/{forum_id}/thread/{thread_id}/restore", api.restoreThreadHandler},
 		{"GET /api/v1/forum/{forum_id}/thread", api.listThreadHandler},
 		{"GET /api/v1/forum/{forum_id}/thread/{thread_id}", api.getThreadHandler},
+		// post
+		{"POST /api/v1/forum/{forum_id}/thread/{thread_id}", api.postPostHandler},
 	}
 
 	api.logger.Info("registering endpoints")

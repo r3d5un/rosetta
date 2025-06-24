@@ -65,6 +65,8 @@ func newPostFromRow(row data.Post) *Post {
 }
 
 type PostInput struct {
+	// ForumID is the parent forum this thread belongs to.
+	ForumID uuid.UUID `json:"forumId"`
 	// ThreadID is the ID of the parent thread.
 	ThreadID uuid.UUID `json:"threadId"`
 	// ReplyTo is the ID of which this post is a reply to.
@@ -332,6 +334,7 @@ func (r *PostRepository) Create(ctx context.Context, input PostInput) (*Post, er
 		logger.LogAttrs(
 			ctx, slog.LevelError, "unable to create post", slog.String("error", err.Error()),
 		)
+		return nil, err
 	}
 	logger.LogAttrs(ctx, slog.LevelInfo, "post created")
 
