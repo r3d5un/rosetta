@@ -1,0 +1,40 @@
+### LIST_USERS
+
+GET {{API_URL}}/api/v1/user HTTP/1.1
+Accept: "application/json"
+Content-Type: application/json
+
+
+### 
+
+
+### LIST_FORUMS
+
+GET {{API_URL}}/api/v1/forum HTTP/1.1
+Accept: "application/json"
+Content-Type: application/json
+
+
+### 
+
+
+### LIST_THREAD
+
+GET {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/thread HTTP/1.1
+Accept: "application/json"
+Content-Type: application/json
+
+
+### 
+
+
+### POST_POST
+
+POST {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/thread/f5b5d836-7660-4d9d-88b1-86144476c4e8 HTTP/1.1
+Accept: "application/json"
+Content-Type: application/json
+
+{
+  "authorId": "{{LIST_USERS.response.body.$.data[0].id}}",
+  "content": "this is content for a post"
+}
