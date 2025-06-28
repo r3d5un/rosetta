@@ -1,62 +1,81 @@
-@hostname=localhost
-@port=4000
-@host={{hostname}}:{{port}}
+@host = {{hostname}}:{{port}}
+@hostname = localhost
+@port = 4000
+
 
 ### CREATE_USER
-POST {{API_URL}}/api/v1/user
+
+POST {{API_URL}}/api/v1/user HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
 
 {
-	"name": "Johnny Silverhand",
-	"username": "silverhand",
-	"email": "silverhand@samurai.nc"
+  "email": "silverhand@samurai.nc",
+  "name": "Johnny Silverhand",
+  "username": "silverhand"
 }
 
-###
+
+### 
+
 
 ### LIST_USERS
-GET {{API_URL}}/api/v1/user
+
+GET {{API_URL}}/api/v1/user HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
 
-###
+
+### 
+
 
 ### GET_USER
-GET {{API_URL}}/api/v1/user/79783d28-c42f-47a8-8efb-58876c3dec3d
+
+GET {{API_URL}}/api/v1/user/79783d28-c42f-47a8-8efb-58876c3dec3d HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
 
-###
+
+### 
+
 
 ### PATCH_USER
-PATCH {{API_URL}}/api/v1/user
+
+PATCH {{API_URL}}/api/v1/user HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
 
 {
-	"id": "{{LIST_USERS.response.body.$.data[0].id}}",
-	"username": "silverhand"
+  "id": "{{LIST_USERS.response.body.$.data[0].id}}",
+  "username": "silverhand"
 }
 
-###
+
+### 
+
 
 ### DELETE_USER
-DELETE {{API_URL}}/api/v1/user/79783d28-c42f-47a8-8efb-58876c3dec3d/delete
+
+DELETE {{API_URL}}/api/v1/user/79783d28-c42f-47a8-8efb-58876c3dec3d/delete HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
 
-###
+
+### 
+
 
 ### RESTORE_USER
-POST {{API_URL}}/api/v1/user/79783d28-c42f-47a8-8efb-58876c3dec3d/restore
+
+POST {{API_URL}}/api/v1/user/79783d28-c42f-47a8-8efb-58876c3dec3d/restore HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
 
-###
+
+### 
+
 
 ### PERMANENTLY_DELETE_USER
-DELETE {{API_URL}}/api/v1/admin/user/79783d28-c42f-47a8-8efb-58876c3dec3d/purge
+
+DELETE {{API_URL}}/api/v1/admin/user/79783d28-c42f-47a8-8efb-58876c3dec3d/purge HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
-

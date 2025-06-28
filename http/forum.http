@@ -1,64 +1,83 @@
 ### LIST_USERS
-GET {{API_URL}}/api/v1/user
+
+GET {{API_URL}}/api/v1/user HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
 
-###
+
+### 
+
 
 ### CREATE_FORUM
-POST {{API_URL}}/api/v1/forum
+
+POST {{API_URL}}/api/v1/forum HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
 
 {
-	"ownerId": "{{LIST_USERS.response.body.$.data[0].id}}",
-	"name": "Night City",
-	"description": "Night City is the place of dreams."
+  "description": "Night City is the place of dreams.",
+  "name": "Night City",
+  "ownerId": "{{LIST_USERS.response.body.$.data[0].id}}"
 }
+
 
 ### LIST_FORUMS
-GET {{API_URL}}/api/v1/forum
+
+GET {{API_URL}}/api/v1/forum HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
 
-###
+
+### 
+
 
 ### GET_FORUM
-GET {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4
+
+GET {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4 HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
 
-###
+
+### 
+
 
 ### PATCH_FORUM
-PATCH {{API_URL}}/api/v1/forum
+
+PATCH {{API_URL}}/api/v1/forum HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
 
 {
-	"id": "{{LIST_FORUMS.response.body.$.data[0].id}}",
-	"description": "Night City is where legends are made."
+  "description": "Night City is where legends are made.",
+  "id": "{{LIST_FORUMS.response.body.$.data[0].id}}"
 }
 
-###
+
+### 
+
 
 ### DELETE_FORUM
-DELETE {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/delete
+
+DELETE {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/delete HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
 
-###
+
+### 
+
 
 ### RESTORE_FORUM
-POST {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/restore
+
+POST {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/restore HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
 
 
-###
+### 
+
 
 ### PERMANENTLY_DELETE_FORUM
-POST {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/purge
+
+POST {{API_URL}}/api/v1/forum/85cf156c-5c30-49ba-9ba0-ea47f05ddcc4/purge HTTP/1.1
 Accept: "application/json"
 Content-Type: application/json
-
