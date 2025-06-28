@@ -70,7 +70,7 @@ type PostInput struct {
 	// ThreadID is the ID of the parent thread.
 	ThreadID uuid.UUID `json:"threadId"`
 	// ReplyTo is the ID of which this post is a reply to.
-	ReplyTo uuid.NullUUID `json:"replyTo"`
+	ReplyTo *uuid.UUID `json:"replyTo"`
 	// AuthorID is the unique identifier of the author of the post.
 	AuthorID uuid.UUID `json:"authorId"`
 	// Content is the actual text content of a post
@@ -80,7 +80,7 @@ type PostInput struct {
 func (p *PostInput) Row() data.PostInput {
 	return data.PostInput{
 		ThreadID: p.ThreadID,
-		ReplyTo:  p.ReplyTo,
+		ReplyTo:  database.NewNullUUID(p.ReplyTo),
 		AuthorID: p.AuthorID,
 		Content:  p.Content,
 	}
